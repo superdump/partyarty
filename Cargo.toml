@@ -1,8 +1,10 @@
 [package]
-name = "artyarty"
+name = "partyarty"
 version = "0.1.0"
 authors = ["Robert Swain <robert.swain@gmail.com>"]
+description = "PartyArty - A Pseudo-Real-Time Ray Tracer"
 
 [dependencies]
+clap = "2.32.0"
 failure = "0.1.2"
 minifb = "0.10.7"
