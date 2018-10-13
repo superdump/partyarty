@@ -1,0 +1,6 @@
+[package]
+name = "artyarty"
+version = "0.1.0"
+authors = ["Robert Swain <robert.swain@gmail.com>"]
+
+[dependencies]
