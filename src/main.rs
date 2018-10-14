@@ -15,6 +15,13 @@ const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const PKG_DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
+fn color(r: Ray) -> Colorf32 {
+    let unit_direction = r.direction.normalize();
+    let t = 0.5 * (unit_direction.y + 1.0);
+    let c = (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+    Colorf32::new(c.x, c.y, c.z, 1.0)
+}
+
 fn main() -> Result<(), Error> {
     let matches = App::new(PKG_NAME)
         .version(PKG_VERSION)
@@ -42,14 +49,16 @@ fn main() -> Result<(), Error> {
 
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
         let mut i = 0;
+        let lower_left_corner = Point3::new(-2.0, -1.0, -1.0);
+        let horizontal = vec3(4.0, 0.0, 0.0);
+        let vertical = vec3(0.0, 2.0, 0.0);
+        let origin = Point3::new(0.0, 0.0, 0.0);
         for y in (0..height).rev() {
             for x in 0..width {
-                let col = Colorf32::new(
-                    (x as f32) / (width as f32),
-                    (y as f32) / (height as f32),
-                    0.2f32,
-                    1.0f32,
-                );
+                let u = (x as f32) / (width as f32);
+                let v = (y as f32) / (height as f32);
+                let r = Ray::new(origin, (lower_left_corner + u * horizontal + v * vertical) - origin);
+                let col = color(r);
                 buffer[i] = col.into();
                 i += 1;
             }
