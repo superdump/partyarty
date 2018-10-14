@@ -1,8 +1,10 @@
+extern crate cgmath;
 #[macro_use]
 extern crate clap;
 extern crate failure;
 extern crate minifb;
 
+use cgmath::{Point3};
 use clap::{App, Arg};
 use failure::Error;
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
@@ -45,13 +47,17 @@ fn main() -> Result<(), Error> {
         let mut i = 0;
         for y in (0..height).rev() {
             for x in 0..width {
-                let r = (x as f32) / (width as f32);
-                let g = (y as f32) / (height as f32);
-                let b = 0.2f32;
-                let ir = (255.99f32 * r) as u8;
-                let ig = (255.99f32 * g) as u8;
-                let ib = (255.99f32 * b) as u8;
-                buffer[i] = rgba_as_u32(ir, ig, ib, 255u8);
+                let col = Point3::new(
+                    (x as f32) / (width as f32),
+                    (y as f32) / (height as f32),
+                    0.2f32,
+                );
+                let icol = Point3::new(
+                    (255.99f32 * col.x) as u8,
+                    (255.99f32 * col.y) as u8,
+                    (255.99f32 * col.z) as u8,
+                );
+                buffer[i] = rgba_as_u32(icol.x, icol.y, icol.z, 255u8);
                 i += 1;
             }
         }
