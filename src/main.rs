@@ -4,19 +4,18 @@ extern crate clap;
 extern crate failure;
 extern crate minifb;
 
-use cgmath::{Point3};
+mod color;
+
 use clap::{App, Arg};
 use failure::Error;
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
+
+use color::*;
 
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const PKG_DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
-
-fn rgba_as_u32(r: u8, g: u8, b: u8, a: u8) -> u32 {
-    ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32)
-}
 
 fn main() -> Result<(), Error> {
     let matches = App::new(PKG_NAME)
@@ -47,17 +46,13 @@ fn main() -> Result<(), Error> {
         let mut i = 0;
         for y in (0..height).rev() {
             for x in 0..width {
-                let col = Point3::new(
+                let col = Colorf32::new(
                     (x as f32) / (width as f32),
                     (y as f32) / (height as f32),
                     0.2f32,
+                    1.0f32,
                 );
-                let icol = Point3::new(
-                    (255.99f32 * col.x) as u8,
-                    (255.99f32 * col.y) as u8,
-                    (255.99f32 * col.z) as u8,
-                );
-                buffer[i] = rgba_as_u32(icol.x, icol.y, icol.z, 255u8);
+                buffer[i] = col.into();
                 i += 1;
             }
         }
