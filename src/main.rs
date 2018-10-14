@@ -15,7 +15,18 @@ const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const PKG_DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
+fn hit_sphere(center: &Point3<f32>, radius: f32, r: &Ray) -> bool {
+    let oc = r.origin - center;
+    let a = r.direction.magnitude2();
+    let b = 2.0 * dot(oc, r.direction);
+    let c = oc.magnitude2() - radius * radius;
+    b * b - 4.0 * a * c > 0.0
+}
+
 fn color(r: Ray) -> Colorf32 {
+    if hit_sphere(&Point3::new(0.0, 0.0, 1.0), 0.5, &r) {
+        return Colorf32::new(1.0, 0.0, 0.0, 1.0);
+    }
     let unit_direction = r.direction.normalize();
     let t = 0.5 * (unit_direction.y + 1.0);
     let c = (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
@@ -42,7 +53,7 @@ fn main() -> Result<(), Error> {
         .get_matches();
 
     let width = value_t!(matches.value_of("width"), usize).unwrap_or(640);
-    let height = value_t!(matches.value_of("height"), usize).unwrap_or(480);
+    let height = value_t!(matches.value_of("height"), usize).unwrap_or(320);
     let mut buffer: Vec<u32> = vec![0; width * height];
 
     let mut window = Window::new(PKG_NAME, width, height, WindowOptions::default())?;
