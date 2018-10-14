@@ -12,6 +12,10 @@ const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const PKG_DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
+fn rgba_as_u32(r: u8, g: u8, b: u8, a: u8) -> u32 {
+    ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32)
+}
+
 fn main() -> Result<(), Error> {
     let matches = App::new(PKG_NAME)
         .version(PKG_VERSION)
@@ -39,7 +43,7 @@ fn main() -> Result<(), Error> {
 
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
         for i in buffer.iter_mut() {
-            *i = 0;
+            *i = rgba_as_u32(0, 0, 255, 255);
         }
 
         window.update_with_buffer(&buffer)?;
