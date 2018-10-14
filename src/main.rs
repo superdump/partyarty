@@ -15,24 +15,11 @@ const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const PKG_DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
-fn hit_sphere(center: &Point3<f32>, radius: f32, r: &Ray) -> f32 {
-    let oc = r.origin - center;
-    let a = r.direction.magnitude2();
-    let b = 2.0 * dot(oc, r.direction);
-    let c = oc.magnitude2() - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    if discriminant < 0.0 {
-        return -1.0;
-    }
-    (-b - discriminant.sqrt()) / (2.0 * a)
-}
-
-fn color(r: Ray) -> Colorf32 {
+fn color(r: &Ray) -> Colorf32 {
     let center = Point3::new(0.0, 0.0, -1.0);
-    let t = hit_sphere(&center, 0.5, &r);
-    if t > 0.0 {
-        let n = (r.at_t(t) - center).normalize();
-        return (0.5 * (n + vec3(1.0, 1.0, 1.0))).into();
+    let s = Sphere::new(center, 0.5);
+    if let Some(rec) = s.hit(r, 0.0, std::f32::MAX) {
+        return (0.5 * (rec.normal + vec3(1.0, 1.0, 1.0))).into();
     }
     let unit_direction = r.direction.normalize();
     let t = 0.5 * (unit_direction.y + 1.0);
@@ -76,7 +63,7 @@ fn main() -> Result<(), Error> {
                 let u = (x as f32) / (width as f32);
                 let v = (y as f32) / (height as f32);
                 let r = Ray::new(origin, (lower_left_corner + u * horizontal + v * vertical) - origin);
-                let col = color(r);
+                let col = color(&r);
                 buffer[i] = col.into();
                 i += 1;
             }
