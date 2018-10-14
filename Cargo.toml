@@ -9,3 +9,11 @@ cgmath = "0.16.1"
 clap = "2.32.0"
 failure = "0.1.2"
 minifb = "0.10.7"
+
+[lib]
+name = "partyarty"
+path = "src/lib.rs"
+
+[[bin]]
+name = "partyarty"
+path = "src/main.rs"

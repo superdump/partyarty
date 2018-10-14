@@ -1,16 +1,14 @@
-extern crate cgmath;
 #[macro_use]
 extern crate clap;
 extern crate failure;
 extern crate minifb;
-
-mod color;
+extern crate partyarty;
 
 use clap::{App, Arg};
 use failure::Error;
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
+use partyarty::*;
 
-use color::*;
 
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
