@@ -52,17 +52,14 @@ fn main() -> Result<(), Error> {
 
     let mut window = Window::new(PKG_NAME, width, height, WindowOptions::default())?;
 
+    let cam = Camera::new();
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
         let mut i = 0;
-        let lower_left_corner = Point3::new(-2.0, -1.0, -1.0);
-        let horizontal = vec3(4.0, 0.0, 0.0);
-        let vertical = vec3(0.0, 2.0, 0.0);
-        let origin = Point3::new(0.0, 0.0, 0.0);
         for y in (0..height).rev() {
             for x in 0..width {
                 let u = (x as f32) / (width as f32);
                 let v = (y as f32) / (height as f32);
-                let r = Ray::new(origin, (lower_left_corner + u * horizontal + v * vertical) - origin);
+                let r = cam.get_ray(u, v);
                 let col = color(&r);
                 buffer[i] = col.into();
                 i += 1;
