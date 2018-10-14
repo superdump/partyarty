@@ -42,8 +42,18 @@ fn main() -> Result<(), Error> {
     let mut window = Window::new(PKG_NAME, width, height, WindowOptions::default())?;
 
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
-        for i in buffer.iter_mut() {
-            *i = rgba_as_u32(0, 0, 255, 255);
+        let mut i = 0;
+        for y in (0..height).rev() {
+            for x in 0..width {
+                let r = (x as f32) / (width as f32);
+                let g = (y as f32) / (height as f32);
+                let b = 0.2f32;
+                let ir = (255.99f32 * r) as u8;
+                let ig = (255.99f32 * g) as u8;
+                let ib = (255.99f32 * b) as u8;
+                buffer[i] = rgba_as_u32(ir, ig, ib, 255u8);
+                i += 1;
+            }
         }
 
         window.update_with_buffer(&buffer)?;
