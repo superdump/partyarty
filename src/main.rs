@@ -18,7 +18,7 @@ const PKG_DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 fn color(r: &Ray) -> Colorf32 {
     let center = Point3::new(0.0, 0.0, -1.0);
     let s = Sphere::new(center, 0.5);
-    if let Some(rec) = s.hit(r, 0.0, std::f32::MAX) {
+    if let Some(rec) = hit(&Hitable::Sphere(s), r, 0.0, std::f32::MAX) {
         return (0.5 * (rec.normal + vec3(1.0, 1.0, 1.0))).into();
     }
     let unit_direction = r.direction.normalize();
