@@ -15,10 +15,6 @@ const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const PKG_DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
-fn lerp(a: Vector3<f32>, t: f32, b: Vector3<f32>) -> Vector3<f32> {
-    (1.0 - t) * a + t * b
-}
-
 fn color(r: &Ray) -> Colorf32 {
     let center = Point3::new(0.0, 0.0, -1.0);
     let s = Sphere::new(center, 0.5);
@@ -27,7 +23,7 @@ fn color(r: &Ray) -> Colorf32 {
     }
     let unit_direction = r.direction.normalize();
     let t = 0.5 * (unit_direction.y + 1.0);
-    let c = lerp(vec3(1.0, 1.0, 1.0), t, vec3(0.5, 0.7, 1.0));
+    let c = lerp_vec3(vec3(1.0, 1.0, 1.0), t, vec3(0.5, 0.7, 1.0));
     Colorf32::new(c.x, c.y, c.z, 1.0)
 }
 
