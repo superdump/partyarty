@@ -1,5 +1,6 @@
 use cgmath::{Point3, Vector3};
 use std::convert::From;
+use std::ops::{AddAssign, MulAssign};
 
 pub struct Colorf32 {
     pub r: f32,
@@ -11,6 +12,24 @@ pub struct Colorf32 {
 impl Colorf32 {
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> Colorf32 {
         Colorf32 { r, g, b, a }
+    }
+}
+
+impl AddAssign for Colorf32 {
+    fn add_assign(&mut self, rhs: Colorf32) {
+        self.r += rhs.r;
+        self.g += rhs.g;
+        self.b += rhs.b;
+        self.a += rhs.a;
+    }
+}
+
+impl MulAssign<f32> for Colorf32 {
+    fn mul_assign(&mut self, rhs: f32) {
+        self.r *= rhs;
+        self.g *= rhs;
+        self.b *= rhs;
+        self.a *= rhs;
     }
 }
 
