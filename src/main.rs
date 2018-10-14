@@ -15,17 +15,24 @@ const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const PKG_DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
-fn hit_sphere(center: &Point3<f32>, radius: f32, r: &Ray) -> bool {
+fn hit_sphere(center: &Point3<f32>, radius: f32, r: &Ray) -> f32 {
     let oc = r.origin - center;
     let a = r.direction.magnitude2();
     let b = 2.0 * dot(oc, r.direction);
     let c = oc.magnitude2() - radius * radius;
-    b * b - 4.0 * a * c > 0.0
+    let discriminant = b * b - 4.0 * a * c;
+    if discriminant < 0.0 {
+        return -1.0;
+    }
+    (-b - discriminant.sqrt()) / (2.0 * a)
 }
 
 fn color(r: Ray) -> Colorf32 {
-    if hit_sphere(&Point3::new(0.0, 0.0, 1.0), 0.5, &r) {
-        return Colorf32::new(1.0, 0.0, 0.0, 1.0);
+    let center = Point3::new(0.0, 0.0, -1.0);
+    let t = hit_sphere(&center, 0.5, &r);
+    if t > 0.0 {
+        let n = (r.at_t(t) - center).normalize();
+        return (0.5 * (n + vec3(1.0, 1.0, 1.0))).into();
     }
     let unit_direction = r.direction.normalize();
     let t = 0.5 * (unit_direction.y + 1.0);

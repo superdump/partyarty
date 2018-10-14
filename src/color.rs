@@ -1,3 +1,4 @@
+use cgmath::{Point3, Vector3};
 use std::convert::From;
 
 pub struct Colorf32 {
@@ -46,5 +47,17 @@ impl From<Colorf32> for Coloru8 {
 impl From<Colorf32> for u32 {
     fn from(color: Colorf32) -> Self {
         Coloru8::from(color).into()
+    }
+}
+
+impl From<Point3<f32>> for Colorf32 {
+    fn from(color: Point3<f32>) -> Self {
+        Colorf32::new(color.x, color.y, color.z, 1.0)
+    }
+}
+
+impl From<Vector3<f32>> for Colorf32 {
+    fn from(color: Vector3<f32>) -> Self {
+        Colorf32::new(color.x, color.y, color.z, 1.0)
     }
 }
