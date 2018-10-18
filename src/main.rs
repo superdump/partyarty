@@ -15,18 +15,6 @@ const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const PKG_DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
-fn color(r: &Ray) -> Colorf32 {
-    let center = Point3::new(0.0, 0.0, -1.0);
-    let s = Sphere::new(center, 0.5);
-    if let Some(rec) = hit(&Hitable::Sphere(s), r, 0.0, std::f32::MAX) {
-        return (0.5 * (rec.normal + vec3(1.0, 1.0, 1.0))).into();
-    }
-    let unit_direction = r.direction.normalize();
-    let t = 0.5 * (unit_direction.y + 1.0);
-    let c = lerp_vec3(vec3(1.0, 1.0, 1.0), t, vec3(0.5, 0.7, 1.0));
-    Colorf32::new(c.x, c.y, c.z, 1.0)
-}
-
 fn main() -> Result<(), Error> {
     let matches = App::new(PKG_NAME)
         .version(PKG_VERSION)
@@ -52,35 +40,48 @@ fn main() -> Result<(), Error> {
             .takes_value(true))
         .get_matches();
 
-    let width = value_t!(matches.value_of("width"), usize).unwrap_or(640);
-    let height = value_t!(matches.value_of("height"), usize).unwrap_or(320);
-    let mut buffer: Vec<u32> = vec![0; width * height];
+    let width: usize = value_t!(matches.value_of("width"), usize).unwrap_or(640);
+    let height: usize = value_t!(matches.value_of("height"), usize).unwrap_or(320);
+    let samples: usize = value_t!(matches.value_of("samples"), usize).unwrap_or(100);
+
+    let buffer: Vec<u32> = vec![0; width * height];
+    let camera = Camera::new();
+
+    let mut world = World::new();
+    register_components(&mut world);
+
+    world.add_resource(camera);
+    world.add_resource(Width(width));
+    world.add_resource(Height(height));
+    world.add_resource(Samples(samples));
+    world.add_resource(FrameCount(0));
+    world.add_resource(Buffer(buffer));
+
+    let mut entities = Vec::<Entity>::new();
+    entities.push(
+        world.create_entity()
+            .with(Position(Point3::new(0.0, 0.0, -1.0)))
+            .with(Hitable::Sphere(Sphere(0.5)))
+            .build()
+    );
+
+    let mut dispatcher = DispatcherBuilder::new()
+        .with(PathTrace, "path_trace", &[])
+        .build();
 
     let mut window = Window::new(PKG_NAME, width, height, WindowOptions::default())?;
 
-    let samples = value_t!(matches.value_of("samples"), usize).unwrap_or(100);
-    let cam = Camera::new();
-    let mut frame_count: u32 = 0;
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
-        frame_count += 1;
-        let mut i = 0;
-        for y in (0..height).rev() {
-            let mut state = (y as u32 * 9781 + frame_count * 6271) | 1;
-            for x in 0..width {
-                let mut col = Colorf32::new(0.0, 0.0, 0.0, 1.0);
-                for _s in 0..samples {
-                    let u = (x as f32 + random_float_01(&mut state)) / (width as f32);
-                    let v = (y as f32 + random_float_01(&mut state)) / (height as f32);
-                    let r = cam.get_ray(u, v);
-                    col += color(&r);
-                }
-                col *= 1.0 / samples as f32;
-                buffer[i] = col.into();
-                i += 1;
-            }
+        {
+            let mut frame_count = world.write_resource::<FrameCount>();
+            (*frame_count).0 += 1;
         }
 
-        window.update_with_buffer(&buffer)?;
+        dispatcher.dispatch(&mut world.res);
+        world.maintain();
+
+        let buffer = world.read_resource::<Buffer>();
+        window.update_with_buffer(&buffer.0)?;
     }
 
     Ok(())

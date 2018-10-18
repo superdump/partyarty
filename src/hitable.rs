@@ -1,6 +1,7 @@
 use cgmath::prelude::*;
 use cgmath::{dot, Point3, Vector3};
 
+use components::Position;
 use ray::Ray;
 
 pub struct HitRecord {
@@ -15,42 +16,30 @@ impl HitRecord {
     }
 }
 
-pub struct Sphere {
-    center: Point3<f32>,
-    radius: f32,
-}
-
-impl Sphere {
-    pub fn new(center: Point3<f32>, radius: f32) -> Sphere {
-        Sphere {
-            center,
-            radius,
-        }
-    }
-}
+pub struct Sphere(pub f32);
 
 pub enum Hitable {
     Sphere(Sphere),
 }
 
-pub fn hit(hitable: &Hitable, r: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+pub fn hit(position: &Position, hitable: &Hitable, r: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
     match hitable {
         Hitable::Sphere(h) => {
-            let oc = r.origin - h.center;
+            let oc = r.origin - position.0;
             let a = r.direction.magnitude2();
             let b = dot(oc, r.direction); // Removed factor of 2.0
-            let c = oc.magnitude2() - h.radius * h.radius;
+            let c = oc.magnitude2() - h.0 * h.0;
             let discriminant_ish = b * b - a * c; // Removed factor of 4.0 on second term
             if discriminant_ish > 0.0 {
                 let temp = (-b - discriminant_ish.sqrt()) / a;
                 if t_min < temp && temp < t_max {
                     let p = r.at_t(temp);
-                    return Some(HitRecord::new(temp, p, (p - h.center) / h.radius));
+                    return Some(HitRecord::new(temp, p, (p - position.0) / h.0));
                 }
                 let temp = (-b + discriminant_ish.sqrt()) / a;
                 if t_min < temp && temp < t_max {
                     let p = r.at_t(temp);
-                    return Some(HitRecord::new(temp, p, (p - h.center) / h.radius));
+                    return Some(HitRecord::new(temp, p, (p - position.0) / h.0));
                 }
             }
             None

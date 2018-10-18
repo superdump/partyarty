@@ -1,12 +1,20 @@
 use cgmath::{Point3, vec3, Vector3};
+use std::default::Default;
 
 use ray::Ray;
 
+#[derive(Debug)]
 pub struct Camera {
     origin: Point3<f32>,
     lower_left_corner: Point3<f32>,
     horizontal: Vector3<f32>,
     vertical: Vector3<f32>,
+}
+
+impl Default for Camera {
+    fn default() -> Camera {
+        Camera::new()
+    }
 }
 
 impl Camera {
