@@ -64,6 +64,12 @@ fn main() -> Result<(), Error> {
             .with(Hitable::Sphere(Sphere(0.5)))
             .build()
     );
+    entities.push(
+        world.create_entity()
+            .with(Position(Point3::new(0.0, -100.5, -1.0)))
+            .with(Hitable::Sphere(Sphere(100.0)))
+            .build()
+    );
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(PathTrace, "path_trace", &[])
