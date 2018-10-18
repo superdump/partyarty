@@ -4,6 +4,7 @@ use cgmath::{dot, Point3, Vector3};
 use components::Position;
 use ray::Ray;
 
+#[derive(Clone, Copy)]
 pub struct HitRecord {
     pub t: f32,
     pub p: Point3<f32>,

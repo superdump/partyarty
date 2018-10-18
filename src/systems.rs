@@ -5,22 +5,11 @@ use specs::prelude::*;
 use camera::Camera;
 use color::Colorf32;
 use components::Position;
-use hitable::{hit, Hitable};
-use ray::Ray;
+use hitable::{hit, Hitable, HitRecord};
 use resources::*;
 use utils::{lerp_vec3, random_float_01};
 
 use std;
-
-fn color(r: &Ray, p: &Position, h: &Hitable) -> Colorf32 {
-    if let Some(rec) = hit(p, h, r, 0.0, std::f32::MAX) {
-        return (0.5 * (rec.normal + vec3(1.0, 1.0, 1.0))).into();
-    }
-    let unit_direction = r.direction.normalize();
-    let t = 0.5 * (unit_direction.y + 1.0);
-    let c = lerp_vec3(vec3(1.0, 1.0, 1.0), t, vec3(0.5, 0.7, 1.0));
-    Colorf32::new(c.x, c.y, c.z, 1.0)
-}
 
 pub struct PathTrace;
 
@@ -54,9 +43,26 @@ impl<'a> System<'a> for PathTrace {
                     let u = (x as f32 + random_float_01(&mut state)) / (width as f32);
                     let v = (y as f32 + random_float_01(&mut state)) / (height as f32);
                     let r = camera.get_ray(u, v);
-                    // TODO: iterate hitables here
+                    let mut closest_hit: Option<HitRecord> = None;
                     for (position, hitable) in (&position, &hitable).join() {
-                        col += color(&r, position, hitable);
+                        if let Some(rec) = hit(position, hitable, &r, 0.0, std::f32::MAX) {
+                            if let Some(closest) = closest_hit {
+                                if rec.t < closest.t {
+                                    closest_hit = Some(rec);
+                                }
+                            } else {
+                                closest_hit = Some(rec);
+                            }
+                            break;
+                        }
+                    }
+                    if let Some(rec) = closest_hit {
+                        col += (0.5 * (rec.normal + vec3(1.0, 1.0, 1.0))).into();
+                    } else {
+                        let unit_direction = r.direction.normalize();
+                        let t = 0.5 * (unit_direction.y + 1.0);
+                        let c = lerp_vec3(vec3(1.0, 1.0, 1.0), t, vec3(0.5, 0.7, 1.0));
+                        col += Colorf32::new(c.x, c.y, c.z, 1.0);
                     }
                 }
                 col *= 1.0 / samples as f32;
