@@ -1,7 +1,9 @@
 use cgmath::{Point3, Vector3};
 use std::convert::From;
-use std::ops::{AddAssign, MulAssign};
+use std::fmt;
+use std::ops::{AddAssign, Div, Mul, MulAssign};
 
+#[derive(Clone, Copy, Debug)]
 pub struct Colorf32 {
     pub r: f32,
     pub g: f32,
@@ -12,6 +14,12 @@ pub struct Colorf32 {
 impl Colorf32 {
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> Colorf32 {
         Colorf32 { r, g, b, a }
+    }
+}
+
+impl fmt::Display for Colorf32 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({:.3}, {:.3}, {:.3}, {:.3})", self.r, self.g, self.b, self.a)
     }
 }
 
@@ -30,6 +38,27 @@ impl MulAssign<f32> for Colorf32 {
         self.g *= rhs;
         self.b *= rhs;
         self.a *= rhs;
+    }
+}
+
+impl Mul<f32> for Colorf32 {
+    type Output = Self;
+
+    fn mul(self, rhs: f32) -> Colorf32 {
+        Colorf32::new(
+            self.r * rhs,
+            self.g * rhs,
+            self.b * rhs,
+            self.a * rhs,
+        )
+    }
+}
+
+impl Div<f32> for Colorf32 {
+    type Output = Self;
+
+    fn div(self, rhs: f32) -> Colorf32 {
+        self * (1.0f32 / rhs)
     }
 }
 

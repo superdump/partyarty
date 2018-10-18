@@ -1,5 +1,4 @@
-#[derive(Debug, Default)]
-pub struct Samples(pub usize);
+use color::Colorf32;
 
 #[derive(Debug, Default)]
 pub struct Width(pub usize);
@@ -11,4 +10,7 @@ pub struct Height(pub usize);
 pub struct FrameCount(pub u32);
 
 #[derive(Debug, Default)]
-pub struct Buffer(pub Vec<u32>);
+pub struct BufferTotals(pub Vec<Colorf32>);
+
+#[derive(Debug, Default)]
+pub struct BufferOutput(pub Vec<u32>);

@@ -42,9 +42,9 @@ fn main() -> Result<(), Error> {
 
     let width: usize = value_t!(matches.value_of("width"), usize).unwrap_or(640);
     let height: usize = value_t!(matches.value_of("height"), usize).unwrap_or(320);
-    let samples: usize = value_t!(matches.value_of("samples"), usize).unwrap_or(100);
 
-    let buffer: Vec<u32> = vec![0; width * height];
+    let buffer_totals: Vec<Colorf32> = vec![Colorf32::new(0.0, 0.0, 0.0, 0.0); width * height];
+    let buffer_output: Vec<u32> = vec![0; width * height];
     let camera = Camera::new();
 
     let mut world = World::new();
@@ -53,9 +53,9 @@ fn main() -> Result<(), Error> {
     world.add_resource(camera);
     world.add_resource(Width(width));
     world.add_resource(Height(height));
-    world.add_resource(Samples(samples));
     world.add_resource(FrameCount(0));
-    world.add_resource(Buffer(buffer));
+    world.add_resource(BufferTotals(buffer_totals));
+    world.add_resource(BufferOutput(buffer_output));
 
     let mut entities = Vec::<Entity>::new();
     entities.push(
@@ -80,14 +80,14 @@ fn main() -> Result<(), Error> {
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
         {
             let mut frame_count = world.write_resource::<FrameCount>();
-            (*frame_count).0 += 1;
+            frame_count.0 += 1;
         }
 
         dispatcher.dispatch(&mut world.res);
         world.maintain();
 
-        let buffer = world.read_resource::<Buffer>();
-        window.update_with_buffer(&buffer.0)?;
+        let buffer = &world.read_resource::<BufferOutput>().0;
+        window.update_with_buffer(buffer)?;
     }
 
     Ok(())
