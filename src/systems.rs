@@ -44,16 +44,17 @@ impl<'a> System<'a> for PathTrace {
                     let v = (y as f32 + random_float_01(&mut state)) / (height as f32);
                     let r = camera.get_ray(u, v);
                     let mut closest_hit: Option<HitRecord> = None;
+                    let mut t_max = std::f32::MAX;
                     for (position, hitable) in (&position, &hitable).join() {
-                        if let Some(rec) = hit(position, hitable, &r, 0.0, std::f32::MAX) {
+                        if let Some(rec) = hit(position, hitable, &r, 0.0, t_max) {
                             if let Some(closest) = closest_hit {
                                 if rec.t < closest.t {
+                                    t_max = rec.t;
                                     closest_hit = Some(rec);
                                 }
                             } else {
                                 closest_hit = Some(rec);
                             }
-                            break;
                         }
                     }
                     if let Some(rec) = closest_hit {
