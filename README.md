@@ -5,14 +5,16 @@ A pseudo-real-time ray tracer (prtrt... party arty) written for educational purp
 ## Goals
 
 * [ ] Real-time preview
-* [ ] Built using an Entity-Component System (ECS)
-    * [ ] Using specs
+    * [x] Preview
+    * [ ] Real-time updates at >= 30Hz
+* [x] Built using an Entity-Component System (ECS)
+    * [x] Using specs
 * [ ] Progressive ray tracing
     * [ ] One idea is to render at one ray sample per pixel per frame update
     * [ ] Another idea is to do a random sampling of as many pixels as can be processed in one real-time frame duration and just let it refine when you are still
 * [ ] Measure convergence
-* [ ] Interactive camera
 * [ ] Bounded-Volume Hierarchy for efficiency of ray-object intersection
+* [ ] Interactive camera
 * [ ] Animation by rendering until convergence threshold is reached, storing and moving on to the next frame
 * [ ] Denoising
 
