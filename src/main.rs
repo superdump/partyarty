@@ -53,7 +53,13 @@ fn main() -> Result<(), Error> {
 
     let buffer_totals: Vec<Colorf32> = vec![Colorf32::new(0.0, 0.0, 0.0, 0.0); width * height];
     let buffer_output: Vec<u32> = vec![0; width * height];
-    let camera = Camera::new();
+    let camera = Camera::new(
+        point3(-2.0, 2.0, 1.0),
+        point3(0.0, 0.0, -1.0),
+        vec3(0.0, 1.0, 0.0),
+        20.0,
+        width as f32 / height as f32,
+    );
 
     let mut world = World::new();
     register_components(&mut world);
