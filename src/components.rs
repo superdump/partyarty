@@ -6,6 +6,10 @@ use material::Material;
 
 pub struct Position(pub Point3<f32>);
 
+pub fn position(x: f32, y: f32, z: f32) -> Position {
+    Position(Point3::new(x, y, z))
+}
+
 impl Component for Position {
     type Storage = VecStorage<Self>;
 }

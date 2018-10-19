@@ -70,30 +70,30 @@ fn main() -> Result<(), Error> {
     let mut entities = Vec::<Entity>::new();
     entities.push(
         world.create_entity()
-            .with(Position(Point3::new(0.0, 0.0, -1.0)))
-            .with(Hitable::Sphere(Sphere(0.5)))
-            .with(Material::Lambertian(Lambertian(vec3(0.8, 0.3, 0.3))))
+            .with(position(0.0, 0.0, -1.0))
+            .with(sphere(0.5))
+            .with(lambertian(vec3(0.8, 0.3, 0.3)))
             .build()
     );
     entities.push(
         world.create_entity()
-            .with(Position(Point3::new(0.0, -100.5, -1.0)))
-            .with(Hitable::Sphere(Sphere(100.0)))
-            .with(Material::Lambertian(Lambertian(vec3(0.8, 0.8, 0.0))))
+            .with(position(0.0, -100.5, -1.0))
+            .with(sphere(100.0))
+            .with(lambertian(vec3(0.8, 0.8, 0.0)))
             .build()
     );
     entities.push(
         world.create_entity()
-            .with(Position(Point3::new(1.0, 0.0, -1.0)))
-            .with(Hitable::Sphere(Sphere(0.5)))
-            .with(Material::Metal(Metal(vec3(0.8, 0.6, 0.2))))
+            .with(position(1.0, 0.0, -1.0))
+            .with(sphere(0.5))
+            .with(metal(vec3(0.8, 0.6, 0.2), 0.3))
             .build()
     );
     entities.push(
         world.create_entity()
-            .with(Position(Point3::new(-1.0, 0.0, -1.0)))
-            .with(Hitable::Sphere(Sphere(0.5)))
-            .with(Material::Metal(Metal(vec3(0.8, 0.8, 0.8))))
+            .with(position(-1.0, 0.0, -1.0))
+            .with(sphere(0.5))
+            .with(metal(vec3(0.8, 0.8, 0.8), 0.1))
             .build()
     );
 
@@ -108,6 +108,9 @@ fn main() -> Result<(), Error> {
         {
             let mut frame_count = world.write_resource::<FrameCount>();
             frame_count.0 += 1;
+            if frame_count.0 > samples as u32 {
+                break;
+            }
         }
 
         dispatcher.dispatch(&mut world.res);
