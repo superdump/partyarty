@@ -54,6 +54,19 @@ impl Mul<f32> for Colorf32 {
     }
 }
 
+impl Mul<Colorf32> for f32 {
+    type Output = Colorf32;
+
+    fn mul(self, rhs: Colorf32) -> Colorf32 {
+        Colorf32::new(
+            self * rhs.r,
+            self * rhs.g,
+            self * rhs.b,
+            self * rhs.a,
+        )
+    }
+}
+
 impl Div<f32> for Colorf32 {
     type Output = Self;
 
