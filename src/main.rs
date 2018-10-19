@@ -36,12 +36,20 @@ fn main() -> Result<(), Error> {
             .short("s")
             .long("samples")
             .value_name("SAMPLES")
-            .help("Samples (rays) per pixel")
+            .help("Samples (rays) per pixel to stop writing images")
+            .takes_value(true))
+        .arg(Arg::with_name("output")
+            .short("o")
+            .long("output")
+            .value_name("OUTPUT")
+            .help("output image file name prefix")
             .takes_value(true))
         .get_matches();
 
     let width: usize = value_t!(matches.value_of("width"), usize).unwrap_or(640);
     let height: usize = value_t!(matches.value_of("height"), usize).unwrap_or(320);
+    let samples: usize = value_t!(matches.value_of("samples"), usize).unwrap_or(100);
+    let prefix: String = value_t!(matches.value_of("output"), String).unwrap_or(String::from(""));
 
     let buffer_totals: Vec<Colorf32> = vec![Colorf32::new(0.0, 0.0, 0.0, 0.0); width * height];
     let buffer_output: Vec<u32> = vec![0; width * height];
@@ -51,8 +59,10 @@ fn main() -> Result<(), Error> {
     register_components(&mut world);
 
     world.add_resource(camera);
+    world.add_resource(ImageFilePrefix(prefix));
     world.add_resource(Width(width));
     world.add_resource(Height(height));
+    world.add_resource(Samples(samples));
     world.add_resource(FrameCount(0));
     world.add_resource(BufferTotals(buffer_totals));
     world.add_resource(BufferOutput(buffer_output));
@@ -73,6 +83,7 @@ fn main() -> Result<(), Error> {
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(PathTrace, "path_trace", &[])
+        .with(SaveImage, "save_image", &["path_trace"])
         .build();
 
     let mut window = Window::new(PKG_NAME, width, height, WindowOptions::default())?;

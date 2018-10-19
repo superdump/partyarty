@@ -8,6 +8,7 @@ description = "PartyArty - A Pseudo-Real-Time Ray Tracer"
 cgmath = "0.16.1"
 clap = "2.32.0"
 failure = "0.1.2"
+image = "0.20.0"
 minifb = "0.10.7"
 specs = "0.12.3"
 

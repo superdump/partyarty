@@ -1,5 +1,6 @@
 use cgmath::prelude::*;
 use cgmath::vec3;
+use image::{RGB, save_buffer};
 use specs::prelude::*;
 
 use camera::Camera;
@@ -69,5 +70,39 @@ impl<'a> System<'a> for PathTrace {
                 i += 1;
             }
         }
+    }
+}
+
+pub struct SaveImage;
+
+impl<'a> System<'a> for SaveImage {
+    type SystemData = (
+        Read<'a, ImageFilePrefix>,
+        Read<'a, Width>,
+        Read<'a, Height>,
+        Read<'a, Samples>,
+        Read<'a, FrameCount>,
+        Read<'a, BufferOutput>,
+    );
+
+    fn run(&mut self, (prefix, width, height, samples, frame_count, buffer_output): Self::SystemData) {
+        let prefix = &prefix.0;
+        let width = width.0;
+        let height = height.0;
+        let samples = samples.0;
+        let frame_count = frame_count.0;
+        if frame_count > samples as u32 || prefix.len() < 1 {
+            return;
+        }
+        let buffer = &buffer_output.0;
+        let mut image_buffer = vec![0u8; width * height * 3];
+        for i in 0..(width * height) {
+            let px = buffer[i];
+            image_buffer[i * 3 + 0] = ((px >> 16) & 0xff) as u8;
+            image_buffer[i * 3 + 1] = ((px >> 8) & 0xff) as u8;
+            image_buffer[i * 3 + 2] = ((px >> 0) & 0xff) as u8;
+        }
+        let filename = format!("{}{:05}.png", prefix, frame_count);
+        save_buffer(filename, &image_buffer, width as u32, height as u32, RGB(8)).unwrap();
     }
 }

@@ -1,4 +1,5 @@
 extern crate cgmath;
+extern crate image;
 extern crate specs;
 
 pub use cgmath::prelude::*;
