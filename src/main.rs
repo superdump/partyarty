@@ -96,6 +96,13 @@ fn main() -> Result<(), Error> {
             .with(dielectric(1.5))
             .build()
     );
+    entities.push(
+        world.create_entity()
+            .with(position(-1.0, 0.0, -1.0))
+            .with(sphere(-0.45))
+            .with(dielectric(1.5))
+            .build()
+    );
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(PathTrace, "path_trace", &[])
