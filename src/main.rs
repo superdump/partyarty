@@ -72,7 +72,7 @@ fn main() -> Result<(), Error> {
         world.create_entity()
             .with(position(0.0, 0.0, -1.0))
             .with(sphere(0.5))
-            .with(lambertian(vec3(0.8, 0.3, 0.3)))
+            .with(lambertian(vec3(0.1, 0.2, 0.5)))
             .build()
     );
     entities.push(
@@ -86,14 +86,14 @@ fn main() -> Result<(), Error> {
         world.create_entity()
             .with(position(1.0, 0.0, -1.0))
             .with(sphere(0.5))
-            .with(metal(vec3(0.8, 0.6, 0.2), 0.3))
+            .with(metal(vec3(0.8, 0.6, 0.2), 0.0))
             .build()
     );
     entities.push(
         world.create_entity()
             .with(position(-1.0, 0.0, -1.0))
             .with(sphere(0.5))
-            .with(metal(vec3(0.8, 0.8, 0.8), 0.1))
+            .with(dielectric(1.5))
             .build()
     );
 
