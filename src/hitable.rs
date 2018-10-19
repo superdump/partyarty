@@ -2,6 +2,7 @@ use cgmath::prelude::*;
 use cgmath::{dot, Point3, Vector3};
 
 use components::Position;
+use material::Material;
 use ray::Ray;
 
 #[derive(Clone, Copy)]
@@ -9,11 +10,12 @@ pub struct HitRecord {
     pub t: f32,
     pub p: Point3<f32>,
     pub normal: Vector3<f32>,
+    pub material: Option<Material>,
 }
 
 impl HitRecord {
-    pub fn new(t: f32, p: Point3<f32>, normal: Vector3<f32>) -> HitRecord {
-        HitRecord { t, p, normal }
+    pub fn new(t: f32, p: Point3<f32>, normal: Vector3<f32>, material: Option<Material>) -> HitRecord {
+        HitRecord { t, p, normal, material }
     }
 }
 
@@ -35,12 +37,12 @@ pub fn hit(position: &Position, hitable: &Hitable, r: &Ray, t_min: f32, t_max: f
                 let temp = (-b - discriminant_ish.sqrt()) / a;
                 if t_min < temp && temp < t_max {
                     let p = r.at_t(temp);
-                    return Some(HitRecord::new(temp, p, (p - position.0) / h.0));
+                    return Some(HitRecord::new(temp, p, (p - position.0) / h.0, None));
                 }
                 let temp = (-b + discriminant_ish.sqrt()) / a;
                 if t_min < temp && temp < t_max {
                     let p = r.at_t(temp);
-                    return Some(HitRecord::new(temp, p, (p - position.0) / h.0));
+                    return Some(HitRecord::new(temp, p, (p - position.0) / h.0, None));
                 }
             }
             None

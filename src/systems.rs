@@ -7,19 +7,28 @@ use camera::Camera;
 use color::Colorf32;
 use components::Position;
 use hitable::{hit, Hitable, HitRecord};
+use material::{Material, scatter};
 use ray::Ray;
 use resources::*;
-use utils::{lerp_vec3, random_float_01, random_in_unit_sphere};
+use utils::{lerp_vec3, random_float_01};
 
 use std;
 
-fn color<'a>(r: &Ray, position: &ReadStorage<'a, Position>, hitable: &ReadStorage<'a, Hitable>, state: &mut u32) -> Colorf32 {
+fn color<'a>(
+    r: &Ray,
+    position: &ReadStorage<'a, Position>,
+    hitable: &ReadStorage<'a, Hitable>,
+    material: &ReadStorage<'a, Material>,
+    depth: u32,
+    state: &mut u32
+) -> Colorf32 {
     use specs::Join;
 
     let mut closest_hit: Option<HitRecord> = None;
     let mut t_max = std::f32::MAX;
-    for (position, hitable) in (position, hitable).join() {
-        if let Some(rec) = hit(position, hitable, &r, 0.001, t_max) {
+    for (position, hitable, material) in (position, hitable, material).join() {
+        if let Some(mut rec) = hit(position, hitable, r, 0.001, t_max) {
+            rec.material = Some(material.clone());
             if let Some(closest) = closest_hit {
                 if rec.t < closest.t {
                     t_max = rec.t;
@@ -31,8 +40,13 @@ fn color<'a>(r: &Ray, position: &ReadStorage<'a, Position>, hitable: &ReadStorag
         }
     }
     if let Some(rec) = closest_hit {
-        let target = rec.p + rec.normal + random_in_unit_sphere(state);
-        return (0.5 * color(&Ray::new(rec.p, target - rec.p), position, hitable, state)).into();
+        let scatter_option = scatter(r, &rec, state);
+        if depth < 50 && scatter_option.is_some() {
+            let (attenuation, scattered) = scatter_option.unwrap();
+            return (attenuation * color(&scattered, position, hitable, material, depth + 1, state)).into();
+        } else {
+            return Colorf32::new(0.0, 0.0, 0.0, 1.0);
+        }
     } else {
         let unit_direction = r.direction.normalize();
         let t = 0.5 * (unit_direction.y + 1.0);
@@ -53,9 +67,10 @@ impl<'a> System<'a> for PathTrace {
         Write<'a, BufferOutput>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, Hitable>,
+        ReadStorage<'a, Material>,
     );
 
-    fn run(&mut self, (camera, width, height, frame_count, mut buffer_totals, mut buffer_output, position, hitable): Self::SystemData) {
+    fn run(&mut self, (camera, width, height, frame_count, mut buffer_totals, mut buffer_output, position, hitable, material): Self::SystemData) {
         let width = width.0;
         let height = height.0;
         let frame_count = frame_count.0;
@@ -69,7 +84,7 @@ impl<'a> System<'a> for PathTrace {
                 let u = (x as f32 + random_float_01(&mut state)) / (width as f32);
                 let v = (y as f32 + random_float_01(&mut state)) / (height as f32);
                 let r = camera.get_ray(u, v);
-                totals[i] += color(&r, &position, &hitable, &mut state);
+                totals[i] += color(&r, &position, &hitable, &material, 0, &mut state);
                 buffer[i] = (totals[i] / frame_count as f32).into();
                 i += 1;
             }

@@ -72,12 +72,28 @@ fn main() -> Result<(), Error> {
         world.create_entity()
             .with(Position(Point3::new(0.0, 0.0, -1.0)))
             .with(Hitable::Sphere(Sphere(0.5)))
+            .with(Material::Lambertian(Lambertian(vec3(0.8, 0.3, 0.3))))
             .build()
     );
     entities.push(
         world.create_entity()
             .with(Position(Point3::new(0.0, -100.5, -1.0)))
             .with(Hitable::Sphere(Sphere(100.0)))
+            .with(Material::Lambertian(Lambertian(vec3(0.8, 0.8, 0.0))))
+            .build()
+    );
+    entities.push(
+        world.create_entity()
+            .with(Position(Point3::new(1.0, 0.0, -1.0)))
+            .with(Hitable::Sphere(Sphere(0.5)))
+            .with(Material::Metal(Metal(vec3(0.8, 0.6, 0.2))))
+            .build()
+    );
+    entities.push(
+        world.create_entity()
+            .with(Position(Point3::new(-1.0, 0.0, -1.0)))
+            .with(Hitable::Sphere(Sphere(0.5)))
+            .with(Material::Metal(Metal(vec3(0.8, 0.8, 0.8))))
             .build()
     );
 
