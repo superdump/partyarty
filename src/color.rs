@@ -67,6 +67,19 @@ impl Mul<Colorf32> for f32 {
     }
 }
 
+impl Mul<Colorf32> for Vector3<f32> {
+    type Output = Colorf32;
+
+    fn mul(self, rhs: Colorf32) -> Colorf32 {
+        Colorf32::new(
+            self.x * rhs.r,
+            self.y * rhs.g,
+            self.z * rhs.b,
+            rhs.a,
+        )
+    }
+}
+
 impl Div<f32> for Colorf32 {
     type Output = Self;
 
