@@ -97,9 +97,9 @@ impl From<Coloru8> for u32 {
 impl From<Colorf32> for Coloru8 {
     fn from(color: Colorf32) -> Self {
         Coloru8 {
-            r: (255.99 * color.r) as u8,
-            g: (255.99 * color.g) as u8,
-            b: (255.99 * color.b) as u8,
+            r: (255.99 * color.r.sqrt()) as u8,
+            g: (255.99 * color.g.sqrt()) as u8,
+            b: (255.99 * color.b.sqrt()) as u8,
             a: (255.99 * color.a) as u8,
         }
     }
