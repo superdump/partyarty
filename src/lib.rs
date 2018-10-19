@@ -14,6 +14,7 @@ mod material;
 mod ray;
 mod resources;
 mod systems;
+mod timers;
 mod utils;
 
 pub use camera::*;
@@ -24,4 +25,5 @@ pub use material::*;
 pub use ray::*;
 pub use resources::*;
 pub use systems::*;
+pub use timers::*;
 pub use utils::*;

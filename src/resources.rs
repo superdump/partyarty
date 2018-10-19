@@ -1,4 +1,8 @@
 use color::Colorf32;
+use timers::Timers;
+
+#[derive(Debug, Default)]
+pub struct PerfTimers(pub Timers);
 
 #[derive(Debug, Default)]
 pub struct Samples(pub usize);

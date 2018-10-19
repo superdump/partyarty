@@ -117,7 +117,11 @@ fn main() -> Result<(), Error> {
 
     let mut window = Window::new(PKG_NAME, width, height, WindowOptions::default())?;
 
+    let timers = Timers::default();
+    world.add_resource(PerfTimers(timers));
+
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
+        timer_enter(&world, "frame");
         {
             let mut frame_count = world.write_resource::<FrameCount>();
             frame_count.0 += 1;
@@ -126,11 +130,18 @@ fn main() -> Result<(), Error> {
             }
         }
 
+        timer_enter(&world, "LOOP : dispatch");
         dispatcher.dispatch(&mut world.res);
         world.maintain();
 
+        timer_transition(&world, "LOOP : dispatch", "LOOP : update_frame");
+
         let buffer = &world.read_resource::<BufferOutput>().0;
         window.update_with_buffer(buffer)?;
+        timer_exit(&world, "LOOP : update_frame");
+
+        timer_exit(&world, "frame");
+        timer_print(&world);
     }
 
     Ok(())

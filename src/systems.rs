@@ -20,7 +20,7 @@ fn color<'a>(
     hitable: &ReadStorage<'a, Hitable>,
     material: &ReadStorage<'a, Material>,
     depth: u32,
-    state: &mut u32
+    state: &mut u32,
 ) -> Colorf32 {
     use specs::Join;
 
@@ -65,12 +65,15 @@ impl<'a> System<'a> for PathTrace {
         Read<'a, FrameCount>,
         Write<'a, BufferTotals>,
         Write<'a, BufferOutput>,
+        Write<'a, PerfTimers>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, Hitable>,
         ReadStorage<'a, Material>,
     );
 
-    fn run(&mut self, (camera, width, height, frame_count, mut buffer_totals, mut buffer_output, position, hitable, material): Self::SystemData) {
+    fn run(&mut self, (camera, width, height, frame_count, mut buffer_totals, mut buffer_output, mut timers, position, hitable, material): Self::SystemData) {
+        let timers = &mut timers.0;
+        timers.enter("SYSTEM : PathTrace");
         let width = width.0;
         let height = height.0;
         let frame_count = frame_count.0;
@@ -89,6 +92,7 @@ impl<'a> System<'a> for PathTrace {
                 i += 1;
             }
         }
+        timers.exit("SYSTEM : PathTrace");
     }
 }
 
@@ -102,17 +106,22 @@ impl<'a> System<'a> for SaveImage {
         Read<'a, Samples>,
         Read<'a, FrameCount>,
         Read<'a, BufferOutput>,
+        Write<'a, PerfTimers>,
     );
 
-    fn run(&mut self, (prefix, width, height, samples, frame_count, buffer_output): Self::SystemData) {
+    fn run(&mut self, (prefix, width, height, samples, frame_count, buffer_output, mut timers): Self::SystemData) {
         let prefix = &prefix.0;
-        let width = width.0;
-        let height = height.0;
         let samples = samples.0;
         let frame_count = frame_count.0;
         if frame_count > samples as u32 || prefix.len() < 1 {
             return;
         }
+
+        let timers = &mut timers.0;
+        timers.enter("SYSTEM : SaveImage");
+
+        let width = width.0;
+        let height = height.0;
         let buffer = &buffer_output.0;
         let mut image_buffer = vec![0u8; width * height * 3];
         for i in 0..(width * height) {
@@ -123,5 +132,6 @@ impl<'a> System<'a> for SaveImage {
         }
         let filename = format!("{}{:05}.png", prefix, frame_count);
         save_buffer(filename, &image_buffer, width as u32, height as u32, RGB(8)).unwrap();
+        timers.exit("SYSTEM : SaveImage");
     }
 }
