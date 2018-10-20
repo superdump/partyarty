@@ -1,13 +1,16 @@
 #[macro_use]
 extern crate clap;
 extern crate failure;
-extern crate minifb;
 extern crate partyarty;
+extern crate sdl2;
 
 use clap::{App, Arg};
 use failure::Error;
-use minifb::{Key, KeyRepeat, Window, WindowOptions};
 use partyarty::*;
+use sdl2::pixels::{Color, PixelFormatEnum};
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
+use sdl2::rect::Rect;
 
 
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
@@ -58,7 +61,7 @@ fn main() -> Result<(), Error> {
     let prefix: String = value_t!(matches.value_of("output"), String).unwrap_or(String::from(""));
     let scene: String = value_t!(matches.value_of("scene"), String).unwrap_or(String::from("random"));
 
-    let buffer_output: Vec<u32> = vec![0; width * height];
+    let buffer_output: Vec<u8> = vec![0; width * height * 4];
 
     let mut world = World::new();
     register_components(&mut world);
@@ -118,16 +121,45 @@ fn main() -> Result<(), Error> {
         .with(RayCast, "ray_cast", &[])
         .with(PathTrace, "path_trace", &["ray_cast"])
         .with(FrameAverage, "frame_average", &["path_trace"])
-        .with(SaveImage, "save_image", &["path_trace"])
+        .with(SaveImage, "save_image", &["frame_average"])
         .build();
 
-    let mut window = Window::new(PKG_NAME, width, height, WindowOptions::default())?;
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
+
+    let window = video_subsystem.window(PKG_NAME, width as u32, height as u32)
+        .position_centered()
+        .build()
+        .unwrap();
+
+    let mut canvas = window.into_canvas().build().unwrap();
+
+    let texture_creator = canvas.texture_creator();
+    let mut texture = texture_creator.create_texture_streaming(
+        Some(PixelFormatEnum::BGRA8888), width as u32, height as u32).unwrap();
+    let rect = Some(Rect::new(0, 0, width as u32, height as u32));
+
+    canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas.clear();
+    canvas.present();
+    let mut event_pump = sdl_context.event_pump().unwrap();
 
     let timers = Timers::default();
     world.add_resource(PerfTimers(timers));
 
-    while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
+    'mainloop: loop {
         timer_enter(&world, "frame");
+        timer_enter(&world, "LOOP : events");
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit {..} |
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    break 'mainloop
+                },
+                _ => {}
+            }
+        }
+
         {
             let mut frame_count = world.write_resource::<FrameCount>();
             frame_count.0 += 1;
@@ -136,15 +168,18 @@ fn main() -> Result<(), Error> {
             }
         }
 
-        timer_enter(&world, "LOOP : dispatch");
+        timer_transition(&world, "LOOP : events", "LOOP : dispatch");
         dispatcher.dispatch(&mut world.res);
         world.maintain();
 
         timer_transition(&world, "LOOP : dispatch", "LOOP : update_frame");
 
         let buffer = &world.read_resource::<BufferOutput>().0;
-        window.update_with_buffer(buffer)?;
+        texture.update(rect, buffer, width * 4)?;
+        canvas.copy(&texture, rect, rect).unwrap();
         timer_exit(&world, "LOOP : update_frame");
+
+        canvas.present();
 
         timer_exit(&world, "frame");
         timer_print(&world);

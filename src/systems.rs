@@ -167,12 +167,17 @@ impl<'a> System<'a> for FrameAverage {
         timers.enter("SYSTEM : FrameAverage");
         let width = width.0;
         let one_over_frame_count = 1.0 / frame_count.0 as f32;
+        let buffer = &mut buffer_output.0;
 
         for (pixel_position, pixel_color) in (&pixel_positions, &pixel_colors).join() {
             let x = pixel_position.0.x;
             let y = pixel_position.0.y;
             let i = y * width + x;
-            buffer_output.0[i] = (one_over_frame_count * pixel_color.0).into();
+            let (a, r, g, b) = (one_over_frame_count * pixel_color.0).as_argb8888();
+            buffer[i * 4 + 0] = a;
+            buffer[i * 4 + 1] = r;
+            buffer[i * 4 + 2] = g;
+            buffer[i * 4 + 3] = b;
         }
         timers.exit("SYSTEM : FrameAverage");
     }
@@ -216,15 +221,8 @@ impl<'a> System<'a> for SaveImage {
         let width = width.0;
         let height = height.0;
         let buffer = &buffer_output.0;
-        let mut image_buffer = vec![0u8; width * height * 3];
-        for i in 0..(width * height) {
-            let px = buffer[i];
-            image_buffer[i * 3 + 0] = ((px >> 16) & 0xff) as u8;
-            image_buffer[i * 3 + 1] = ((px >> 8) & 0xff) as u8;
-            image_buffer[i * 3 + 2] = ((px >> 0) & 0xff) as u8;
-        }
         let filename = format!("{}{:05}.png", prefix, frame_count);
-        save_buffer(filename, &image_buffer, width as u32, height as u32, RGB(8)).unwrap();
+        save_buffer(filename, buffer, width as u32, height as u32, RGB(8)).unwrap();
         timers.exit("SYSTEM : SaveImage");
     }
 }

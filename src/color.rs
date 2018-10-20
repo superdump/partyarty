@@ -15,6 +15,11 @@ impl Colorf32 {
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> Colorf32 {
         Colorf32 { r, g, b, a }
     }
+
+    pub fn as_argb8888(&self) -> (u8, u8, u8, u8) {
+        let c: Coloru8 = (*self).into();
+        (c.a, c.r, c.g, c.b)
+    }
 }
 
 impl fmt::Display for Colorf32 {
