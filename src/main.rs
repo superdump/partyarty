@@ -58,7 +58,6 @@ fn main() -> Result<(), Error> {
     let prefix: String = value_t!(matches.value_of("output"), String).unwrap_or(String::from(""));
     let scene: String = value_t!(matches.value_of("scene"), String).unwrap_or(String::from("random"));
 
-    let buffer_totals: Vec<Colorf32> = vec![Colorf32::new(0.0, 0.0, 0.0, 0.0); width * height];
     let buffer_output: Vec<u32> = vec![0; width * height];
 
     let mut world = World::new();
