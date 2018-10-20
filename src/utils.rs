@@ -51,6 +51,17 @@ pub fn point3(x: f32, y: f32, z: f32) -> Point3<f32> {
     Point3::new(x, y, z)
 }
 
+pub fn random_in_unit_disk() -> Vector3<f32> {
+    let mut p;
+    let one_one_zero = vec3(1.0f32, 1.0f32, 0.0f32);
+    // the below is a do {} while () loop
+    while {
+        p = 2.0 * vec3(random_float_01(), random_float_01(), 0.0) - one_one_zero;
+        p.magnitude2() >= 1.0
+    } {}
+    p
+}
+
 pub fn random_in_unit_sphere() -> Vector3<f32> {
     let mut p;
     let ones = vec3(1.0f32, 1.0f32, 1.0f32);

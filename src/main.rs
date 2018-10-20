@@ -66,12 +66,16 @@ fn main() -> Result<(), Error> {
     let camera;
     let mut entities = match scene.as_ref() {
         "balls" => {
+            let look_from = point3(3.0, 3.0, 2.0);
+            let look_at = point3(0.0, 0.0, -1.0);
             camera = Camera::new(
-                point3(-2.0, 2.0, 1.0),
-                point3(0.0, 0.0, -1.0),
+                look_from,
+                look_at,
                 vec3(0.0, 1.0, 0.0),
                 20.0,
                 width as f32 / height as f32,
+                2.0,
+                (look_from - look_at).magnitude(),
             );
             balls(&mut world)
         },
@@ -82,6 +86,8 @@ fn main() -> Result<(), Error> {
                 vec3(0.0, 1.0, 0.0),
                 20.0,
                 width as f32 / height as f32,
+                0.1,
+                10.0,
             );
             random_scene(&mut world)
         },
