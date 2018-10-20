@@ -3,7 +3,7 @@ use std::convert::From;
 use std::fmt;
 use std::ops::{AddAssign, Div, Mul, MulAssign};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Colorf32 {
     pub r: f32,
     pub g: f32,

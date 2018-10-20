@@ -5,7 +5,7 @@ use specs::prelude::*;
 
 use camera::Camera;
 use color::Colorf32;
-use components::Position;
+use components::*;
 use hitable::{hit, Hitable, HitRecord};
 use material::{Material, scatter};
 use ray::Ray;
@@ -54,43 +54,124 @@ fn color<'a>(
     }
 }
 
+pub struct RayCast;
+
+impl<'a> System<'a> for RayCast {
+    type SystemData = (
+        ReadStorage<'a, PixelPosition>,
+        Read<'a, Camera>,
+        Read<'a, Width>,
+        Read<'a, Height>,
+        WriteStorage<'a, Ray>,
+        // Write<'a, PerfTimers>,
+    );
+
+    fn run(
+        &mut self,
+        (
+            pixel_positions,
+            camera,
+            width,
+            height,
+            mut rays,
+            // mut timers,
+        ): Self::SystemData,
+    ) {
+        use rayon::prelude::*;
+        use specs::ParJoin;
+
+        // let timers = &mut timers.0;
+        // timers.enter("SYSTEM : RayCast");
+        let width_f32 = width.0 as f32;
+        let height_f32 = height.0 as f32;
+        let height_minus_one = height.0 - 1;
+
+        (&pixel_positions, &mut rays)
+            .par_join()
+            .for_each(|(pixel_position, ray)| {
+                let x = pixel_position.0.x;
+                let y = height_minus_one - pixel_position.0.y;
+                let u = (x as f32 + random_float_01()) / width_f32;
+                let v = (y as f32 + random_float_01()) / height_f32;
+                *ray = camera.get_ray(u, v);
+            });
+        // timers.exit("SYSTEM : RayCast");
+    }
+}
+
 pub struct PathTrace;
 
 impl<'a> System<'a> for PathTrace {
     type SystemData = (
-        Read<'a, Camera>,
-        Read<'a, Width>,
-        Read<'a, Height>,
-        Read<'a, FrameCount>,
-        Write<'a, BufferTotals>,
-        Write<'a, BufferOutput>,
-        Write<'a, PerfTimers>,
+        ReadStorage<'a, Ray>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, Hitable>,
         ReadStorage<'a, Material>,
+        WriteStorage<'a, PixelColor>,
+        // Write<'a, PerfTimers>,
     );
 
-    fn run(&mut self, (camera, width, height, frame_count, mut buffer_totals, mut buffer_output, mut timers, position, hitable, material): Self::SystemData) {
-        let timers = &mut timers.0;
-        timers.enter("SYSTEM : PathTrace");
-        let width = width.0;
-        let height = height.0;
-        let frame_count = frame_count.0;
-        let totals = &mut buffer_totals.0;
-        let buffer = &mut buffer_output.0;
+    fn run(
+        &mut self,
+        (
+            rays,
+            positions,
+            hitables,
+            materials,
+            mut pixel_colors,
+            // mut timers,
+        ): Self::SystemData
+    ) {
+        use rayon::prelude::*;
+        use specs::ParJoin;
 
-        let mut i = 0;
-        for y in (0..height).rev() {
-            for x in 0..width {
-                let u = (x as f32 + random_float_01()) / (width as f32);
-                let v = (y as f32 + random_float_01()) / (height as f32);
-                let r = camera.get_ray(u, v);
-                totals[i] += color(&r, &position, &hitable, &material, 0);
-                buffer[i] = (totals[i] / frame_count as f32).into();
-                i += 1;
-            }
+        // let timers = &mut timers.0;
+        // timers.enter("SYSTEM : PathTrace");
+
+        (&rays, &mut pixel_colors)
+            .par_join()
+            .for_each(|(ray, pixel_color)| {
+                pixel_color.0 += color(ray, &positions, &hitables, &materials, 0);
+            });
+
+        // timers.exit("SYSTEM : PathTrace");
+    }
+}
+
+pub struct FrameAverage;
+
+impl<'a> System<'a> for FrameAverage {
+    type SystemData = (
+        ReadStorage<'a, PixelPosition>,
+        ReadStorage<'a, PixelColor>,
+        Read<'a, Width>,
+        Read<'a, FrameCount>,
+        Write<'a, BufferOutput>,
+        // Write<'a, PerfTimers>,
+    );
+
+    fn run(
+        &mut self,
+        (
+            pixel_positions,
+            pixel_colors,
+            width,
+            frame_count,
+            mut buffer_output,
+            // mut timers,
+        ): Self::SystemData
+    ) {
+        use specs::Join;
+
+        let width = width.0;
+        let one_over_frame_count = 1.0 / frame_count.0 as f32;
+
+        for (pixel_position, pixel_color) in (&pixel_positions, &pixel_colors).join() {
+            let x = pixel_position.0.x;
+            let y = pixel_position.0.y;
+            let i = y * width + x;
+            buffer_output.0[i] = (one_over_frame_count * pixel_color.0).into();
         }
-        timers.exit("SYSTEM : PathTrace");
     }
 }
 
@@ -104,10 +185,21 @@ impl<'a> System<'a> for SaveImage {
         Read<'a, Samples>,
         Read<'a, FrameCount>,
         Read<'a, BufferOutput>,
-        Write<'a, PerfTimers>,
+        // Write<'a, PerfTimers>,
     );
 
-    fn run(&mut self, (prefix, width, height, samples, frame_count, buffer_output, mut timers): Self::SystemData) {
+    fn run(
+        &mut self,
+        (
+            prefix,
+            width,
+            height,
+            samples,
+            frame_count,
+            buffer_output,
+            // mut timers,
+        ): Self::SystemData
+    ) {
         let prefix = &prefix.0;
         let samples = samples.0;
         let frame_count = frame_count.0;
@@ -115,8 +207,8 @@ impl<'a> System<'a> for SaveImage {
             return;
         }
 
-        let timers = &mut timers.0;
-        timers.enter("SYSTEM : SaveImage");
+        // let timers = &mut timers.0;
+        // timers.enter("SYSTEM : SaveImage");
 
         let width = width.0;
         let height = height.0;
@@ -130,6 +222,6 @@ impl<'a> System<'a> for SaveImage {
         }
         let filename = format!("{}{:05}.png", prefix, frame_count);
         save_buffer(filename, &image_buffer, width as u32, height as u32, RGB(8)).unwrap();
-        timers.exit("SYSTEM : SaveImage");
+        // timers.exit("SYSTEM : SaveImage");
     }
 }

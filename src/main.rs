@@ -88,18 +88,31 @@ fn main() -> Result<(), Error> {
         },
     };
 
+    for y in 0..height {
+        for x in 0..width {
+            entities.push(
+                world.create_entity()
+                    .with(pixel_position(x, y))
+                    .with(pixel_color(0.0, 0.0, 0.0, 0.0))
+                    .with(Ray::default())
+                    .build()
+            );
+        }
+    }
+
     world.add_resource(camera);
     world.add_resource(ImageFilePrefix(prefix));
     world.add_resource(Width(width));
     world.add_resource(Height(height));
     world.add_resource(Samples(samples));
     world.add_resource(FrameCount(0));
-    world.add_resource(BufferTotals(buffer_totals));
     world.add_resource(BufferOutput(buffer_output));
 
 
     let mut dispatcher = DispatcherBuilder::new()
-        .with(PathTrace, "path_trace", &[])
+        .with(RayCast, "ray_cast", &[])
+        .with(PathTrace, "path_trace", &["ray_cast"])
+        .with(FrameAverage, "frame_average", &["path_trace"])
         .with(SaveImage, "save_image", &["path_trace"])
         .build();
 
