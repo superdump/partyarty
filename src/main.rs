@@ -38,6 +38,12 @@ fn main() -> Result<(), Error> {
             .value_name("SAMPLES")
             .help("Samples (rays) per pixel to stop writing images")
             .takes_value(true))
+        .arg(Arg::with_name("scene")
+            .short("c")
+            .long("scene")
+            .value_name("SCENE")
+            .help("The scene to render")
+            .takes_value(true))
         .arg(Arg::with_name("output")
             .short("o")
             .long("output")
@@ -50,19 +56,37 @@ fn main() -> Result<(), Error> {
     let height: usize = value_t!(matches.value_of("height"), usize).unwrap_or(320);
     let samples: usize = value_t!(matches.value_of("samples"), usize).unwrap_or(100);
     let prefix: String = value_t!(matches.value_of("output"), String).unwrap_or(String::from(""));
+    let scene: String = value_t!(matches.value_of("scene"), String).unwrap_or(String::from("random"));
 
     let buffer_totals: Vec<Colorf32> = vec![Colorf32::new(0.0, 0.0, 0.0, 0.0); width * height];
     let buffer_output: Vec<u32> = vec![0; width * height];
-    let camera = Camera::new(
-        point3(-2.0, 2.0, 1.0),
-        point3(0.0, 0.0, -1.0),
-        vec3(0.0, 1.0, 0.0),
-        20.0,
-        width as f32 / height as f32,
-    );
 
     let mut world = World::new();
     register_components(&mut world);
+
+    let camera;
+    let mut entities = match scene.as_ref() {
+        "balls" => {
+            camera = Camera::new(
+                point3(-2.0, 2.0, 1.0),
+                point3(0.0, 0.0, -1.0),
+                vec3(0.0, 1.0, 0.0),
+                20.0,
+                width as f32 / height as f32,
+            );
+            balls(&mut world)
+        },
+        "random" | _ => {
+            camera = Camera::new(
+                point3(13.0, 2.0, 3.0),
+                point3(0.0, 0.0, 0.0),
+                vec3(0.0, 1.0, 0.0),
+                20.0,
+                width as f32 / height as f32,
+            );
+            random_scene(&mut world)
+        },
+    };
 
     world.add_resource(camera);
     world.add_resource(ImageFilePrefix(prefix));
@@ -73,42 +97,6 @@ fn main() -> Result<(), Error> {
     world.add_resource(BufferTotals(buffer_totals));
     world.add_resource(BufferOutput(buffer_output));
 
-    let mut entities = Vec::<Entity>::new();
-    entities.push(
-        world.create_entity()
-            .with(position(0.0, 0.0, -1.0))
-            .with(sphere(0.5))
-            .with(lambertian(vec3(0.1, 0.2, 0.5)))
-            .build()
-    );
-    entities.push(
-        world.create_entity()
-            .with(position(0.0, -100.5, -1.0))
-            .with(sphere(100.0))
-            .with(lambertian(vec3(0.8, 0.8, 0.0)))
-            .build()
-    );
-    entities.push(
-        world.create_entity()
-            .with(position(1.0, 0.0, -1.0))
-            .with(sphere(0.5))
-            .with(metal(vec3(0.8, 0.6, 0.2), 0.0))
-            .build()
-    );
-    entities.push(
-        world.create_entity()
-            .with(position(-1.0, 0.0, -1.0))
-            .with(sphere(0.5))
-            .with(dielectric(1.5))
-            .build()
-    );
-    entities.push(
-        world.create_entity()
-            .with(position(-1.0, 0.0, -1.0))
-            .with(sphere(-0.45))
-            .with(dielectric(1.5))
-            .build()
-    );
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(PathTrace, "path_trace", &[])
