@@ -63,7 +63,7 @@ impl<'a> System<'a> for RayCast {
         Read<'a, Width>,
         Read<'a, Height>,
         WriteStorage<'a, Ray>,
-        // Write<'a, PerfTimers>,
+        Write<'a, PerfTimers>,
     );
 
     fn run(
@@ -74,14 +74,14 @@ impl<'a> System<'a> for RayCast {
             width,
             height,
             mut rays,
-            // mut timers,
+            mut timers,
         ): Self::SystemData,
     ) {
         use rayon::prelude::*;
         use specs::ParJoin;
 
-        // let timers = &mut timers.0;
-        // timers.enter("SYSTEM : RayCast");
+        let timers = &mut timers.0;
+        timers.enter("SYSTEM : RayCast");
         let width_f32 = width.0 as f32;
         let height_f32 = height.0 as f32;
         let height_minus_one = height.0 - 1;
@@ -95,7 +95,7 @@ impl<'a> System<'a> for RayCast {
                 let v = (y as f32 + random_float_01()) / height_f32;
                 *ray = camera.get_ray(u, v);
             });
-        // timers.exit("SYSTEM : RayCast");
+        timers.exit("SYSTEM : RayCast");
     }
 }
 
@@ -108,7 +108,7 @@ impl<'a> System<'a> for PathTrace {
         ReadStorage<'a, Hitable>,
         ReadStorage<'a, Material>,
         WriteStorage<'a, PixelColor>,
-        // Write<'a, PerfTimers>,
+        Write<'a, PerfTimers>,
     );
 
     fn run(
@@ -119,14 +119,14 @@ impl<'a> System<'a> for PathTrace {
             hitables,
             materials,
             mut pixel_colors,
-            // mut timers,
+            mut timers,
         ): Self::SystemData
     ) {
         use rayon::prelude::*;
         use specs::ParJoin;
 
-        // let timers = &mut timers.0;
-        // timers.enter("SYSTEM : PathTrace");
+        let timers = &mut timers.0;
+        timers.enter("SYSTEM : PathTrace");
 
         (&rays, &mut pixel_colors)
             .par_join()
@@ -134,7 +134,7 @@ impl<'a> System<'a> for PathTrace {
                 pixel_color.0 += color(ray, &positions, &hitables, &materials, 0);
             });
 
-        // timers.exit("SYSTEM : PathTrace");
+        timers.exit("SYSTEM : PathTrace");
     }
 }
 
@@ -147,7 +147,7 @@ impl<'a> System<'a> for FrameAverage {
         Read<'a, Width>,
         Read<'a, FrameCount>,
         Write<'a, BufferOutput>,
-        // Write<'a, PerfTimers>,
+        Write<'a, PerfTimers>,
     );
 
     fn run(
@@ -158,11 +158,13 @@ impl<'a> System<'a> for FrameAverage {
             width,
             frame_count,
             mut buffer_output,
-            // mut timers,
+            mut timers,
         ): Self::SystemData
     ) {
         use specs::Join;
 
+        let timers = &mut timers.0;
+        timers.enter("SYSTEM : FrameAverage");
         let width = width.0;
         let one_over_frame_count = 1.0 / frame_count.0 as f32;
 
@@ -172,6 +174,7 @@ impl<'a> System<'a> for FrameAverage {
             let i = y * width + x;
             buffer_output.0[i] = (one_over_frame_count * pixel_color.0).into();
         }
+        timers.exit("SYSTEM : FrameAverage");
     }
 }
 
@@ -185,7 +188,7 @@ impl<'a> System<'a> for SaveImage {
         Read<'a, Samples>,
         Read<'a, FrameCount>,
         Read<'a, BufferOutput>,
-        // Write<'a, PerfTimers>,
+        Write<'a, PerfTimers>,
     );
 
     fn run(
@@ -197,7 +200,7 @@ impl<'a> System<'a> for SaveImage {
             samples,
             frame_count,
             buffer_output,
-            // mut timers,
+            mut timers,
         ): Self::SystemData
     ) {
         let prefix = &prefix.0;
@@ -207,8 +210,8 @@ impl<'a> System<'a> for SaveImage {
             return;
         }
 
-        // let timers = &mut timers.0;
-        // timers.enter("SYSTEM : SaveImage");
+        let timers = &mut timers.0;
+        timers.enter("SYSTEM : SaveImage");
 
         let width = width.0;
         let height = height.0;
@@ -222,6 +225,6 @@ impl<'a> System<'a> for SaveImage {
         }
         let filename = format!("{}{:05}.png", prefix, frame_count);
         save_buffer(filename, &image_buffer, width as u32, height as u32, RGB(8)).unwrap();
-        // timers.exit("SYSTEM : SaveImage");
+        timers.exit("SYSTEM : SaveImage");
     }
 }
