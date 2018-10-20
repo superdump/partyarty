@@ -20,7 +20,6 @@ fn color<'a>(
     hitable: &ReadStorage<'a, Hitable>,
     material: &ReadStorage<'a, Material>,
     depth: u32,
-    state: &mut u32,
 ) -> Colorf32 {
     use specs::Join;
 
@@ -40,10 +39,10 @@ fn color<'a>(
         }
     }
     if let Some(rec) = closest_hit {
-        let scatter_option = scatter(r, &rec, state);
+        let scatter_option = scatter(r, &rec);
         if depth < 50 && scatter_option.is_some() {
             let (attenuation, scattered) = scatter_option.unwrap();
-            return (attenuation * color(&scattered, position, hitable, material, depth + 1, state)).into();
+            return (attenuation * color(&scattered, position, hitable, material, depth + 1)).into();
         } else {
             return Colorf32::new(0.0, 0.0, 0.0, 1.0);
         }
@@ -82,12 +81,11 @@ impl<'a> System<'a> for PathTrace {
 
         let mut i = 0;
         for y in (0..height).rev() {
-            let mut state = (y as u32 * 9781 + frame_count * 6271) | 1;
             for x in 0..width {
-                let u = (x as f32 + random_float_01(&mut state)) / (width as f32);
-                let v = (y as f32 + random_float_01(&mut state)) / (height as f32);
+                let u = (x as f32 + random_float_01()) / (width as f32);
+                let v = (y as f32 + random_float_01()) / (height as f32);
                 let r = camera.get_ray(u, v);
-                totals[i] += color(&r, &position, &hitable, &material, 0, &mut state);
+                totals[i] += color(&r, &position, &hitable, &material, 0);
                 buffer[i] = (totals[i] / frame_count as f32).into();
                 i += 1;
             }

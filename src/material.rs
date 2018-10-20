@@ -60,17 +60,17 @@ pub enum Material {
     Metal(Metal),
 }
 
-pub fn scatter(r_in: &Ray, rec: &HitRecord, state: &mut u32) -> Option<(Vector3<f32>, Ray)> {
+pub fn scatter(r_in: &Ray, rec: &HitRecord) -> Option<(Vector3<f32>, Ray)> {
     if let Some(material) = rec.material {
         match material {
             Material::Lambertian(m) => {
-                let target = rec.p + rec.normal + random_in_unit_sphere(state);
+                let target = rec.p + rec.normal + random_in_unit_sphere();
                 let scattered = Ray::new(rec.p, target - rec.p);
                 return Some((m.albedo, scattered));
             },
             Material::Metal(m) => {
                 let reflected = reflect(&r_in.direction.normalize(), &rec.normal);
-                let scattered = Ray::new(rec.p, reflected + m.fuzz * random_in_unit_sphere(state));
+                let scattered = Ray::new(rec.p, reflected + m.fuzz * random_in_unit_sphere());
                 if scattered.direction.dot(rec.normal) > 0.0 {
                     return Some((m.albedo, scattered));
                 } else {
@@ -96,7 +96,7 @@ pub fn scatter(r_in: &Ray, rec: &HitRecord, state: &mut u32) -> Option<(Vector3<
                 let attenuation = vec3(1.0, 1.0, 1.0);
                 match refract(&r_in.direction, &outward_normal, ni_over_nt) {
                     Some(refracted) => {
-                        if schlick(cosine, m.ref_idx) > random_float_01(state) {
+                        if schlick(cosine, m.ref_idx) > random_float_01() {
                             return Some((
                                 attenuation,
                                 Ray::new(rec.p, reflect(&r_in.direction, &rec.normal))

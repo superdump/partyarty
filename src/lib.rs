@@ -1,6 +1,9 @@
 extern crate cgmath;
 extern crate image;
+extern crate rand;
 extern crate specs;
+#[macro_use]
+extern crate thread_local;
 
 pub use cgmath::prelude::*;
 pub use cgmath::*;
