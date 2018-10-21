@@ -7,7 +7,7 @@ description = "PartyArty - A Pseudo-Real-Time Ray Tracer"
 [dependencies]
 cgmath = "0.16.1"
 clap = "2.32.0"
-failure = "0.1.2"
+failure = "0.1.3"
 image = "0.20.0"
 rand = "0.5.5"
 rayon = "1.0.2"
