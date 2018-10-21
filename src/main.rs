@@ -8,7 +8,7 @@ extern crate sdl2;
 use clap::{App, Arg};
 use failure::Error;
 use partyarty::*;
-use rand::{thread_rng, distributions::{Distribution, Uniform}};
+use rand::{thread_rng, Rng};
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -105,28 +105,24 @@ fn main() -> Result<(), Error> {
         },
     };
 
-    let n_pixels = (width * height) as u32;
-    let mut set = BitSet::new();
-    let range = Uniform::from(0..n_pixels);
-    let mut rng = thread_rng();
-    for _ in 0..n_pixels {
-        let mut i;
-        while {
-            i = range.sample(&mut rng);
-            set.contains(i)
-        } {}
-        set.add(i);
-        let i = i as usize;
-        let x = i % width;
-        let y = i / width;
-        entities.push(
-            world.create_entity()
-                .with(pixel_position(x, y))
-                .with(pixel_color(0.0, 0.0, 0.0, 0.0))
-                .with(Ray::default())
-                .with(SampleCount(0.0f32))
-                .build()
-        );
+    {
+        let mut coords = Vec::with_capacity(width * height);
+        for y in 0..height {
+            for x in 0..width {
+                coords.push((x, y));
+            }
+        }
+        thread_rng().shuffle(&mut coords);
+        for (x, y) in coords {
+            entities.push(
+                world.create_entity()
+                    .with(pixel_position(x, y))
+                    .with(pixel_color(0.0, 0.0, 0.0, 0.0))
+                    .with(Ray::default())
+                    .with(SampleCount(0.0f32))
+                    .build()
+            );
+        }
     }
 
     world.add_resource(camera);
