@@ -162,6 +162,11 @@ impl<'a> System<'a> for PathTrace {
         if count < new_samples_to_process {
             *pixels_to_process = rays.mask().clone();
             *pixels_to_process &= pixel_colors.mask();
+            pixel_collection = (&*pixels_to_process)
+                .join()
+                .take_while(|_| { count += 1; count < new_samples_to_process })
+                .collect();
+            pixels_to_process_now |= &pixel_collection;
         }
 
         (&rays, &mut pixel_colors, &mut sample_counts, pixels_to_process_now.clone())
