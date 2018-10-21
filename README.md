@@ -4,10 +4,10 @@ A pseudo-real-time ray tracer (prtrt... party arty) written for educational purp
 
 ## Goals
 
-* [ ] Real-time preview
+* [x] Real-time preview
     * [x] Preview
-    * [ ] Real-time updates at >= 30Hz
-        * Depends on scene complexity and resolution - separate frame update from processing
+    * [x] Real-time updates at >= 30Hz
+        * The number of samples to process per frame is dynamically limited, targeting a specified preview frame rate.
 * [x] Built using an Entity-Component System (ECS)
     * [x] Using specs
 * [x] Progressive ray tracing
