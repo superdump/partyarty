@@ -1,3 +1,5 @@
+use hibitset::BitSet;
+
 use timers::Timers;
 
 #[derive(Debug, Default)]
@@ -20,3 +22,6 @@ pub struct BufferOutput(pub Vec<u8>);
 
 #[derive(Debug, Default)]
 pub struct ImageFilePrefix(pub String);
+
+#[derive(Debug, Default)]
+pub struct PixelsToProcess(pub BitSet);

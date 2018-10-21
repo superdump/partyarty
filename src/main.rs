@@ -115,6 +115,7 @@ fn main() -> Result<(), Error> {
     world.add_resource(Samples(samples));
     world.add_resource(FrameCount(0));
     world.add_resource(BufferOutput(buffer_output));
+    world.add_resource(PixelsToProcess(BitSet::new()));
 
 
     let mut dispatcher = DispatcherBuilder::new()
@@ -161,8 +162,7 @@ fn main() -> Result<(), Error> {
         }
 
         {
-            let mut frame_count = world.write_resource::<FrameCount>();
-            frame_count.0 += 1;
+            let frame_count = world.read_resource::<FrameCount>();
             if frame_count.0 > samples as u32 {
                 break;
             }
@@ -174,8 +174,10 @@ fn main() -> Result<(), Error> {
 
         timer_transition(&world, "LOOP : dispatch", "LOOP : update_frame");
 
+        {
         let buffer = &world.read_resource::<BufferOutput>().0;
         texture.update(rect, buffer, width * 4)?;
+        }
         canvas.copy(&texture, rect, rect).unwrap();
         timer_exit(&world, "LOOP : update_frame");
 

@@ -108,6 +108,8 @@ impl<'a> System<'a> for PathTrace {
         ReadStorage<'a, Hitable>,
         ReadStorage<'a, Material>,
         WriteStorage<'a, PixelColor>,
+        Write<'a, PixelsToProcess>,
+        Write<'a, FrameCount>,
         Write<'a, PerfTimers>,
     );
 
@@ -119,18 +121,36 @@ impl<'a> System<'a> for PathTrace {
             hitables,
             materials,
             mut pixel_colors,
+            mut pixels_to_process,
+            mut frame_count,
             mut timers,
         ): Self::SystemData
     ) {
         use rayon::prelude::*;
-        use specs::ParJoin;
+        use specs::{Join, ParJoin};
 
         let timers = &mut timers.0;
         timers.enter("SYSTEM : PathTrace");
 
-        (&rays, &mut pixel_colors)
+        let pixels_to_process = &mut pixels_to_process.0;
+        let mut pixels_to_process_now = BitSet::new();
+        let mut count = 0;
+        let limit = 1_000;
+        let pixel_collection: BitSet = (&*pixels_to_process)
+            .join()
+            .take_while(|_| { count += 1; count < limit })
+            .collect();
+        pixels_to_process_now |= &pixel_collection;
+        *pixels_to_process &= &!pixels_to_process_now.clone();
+        if count < limit {
+            frame_count.0 += 1;
+            *pixels_to_process = rays.mask().clone();
+            *pixels_to_process &= pixel_colors.mask();
+        }
+
+        (&rays, &mut pixel_colors, pixels_to_process_now.clone())
             .par_join()
-            .for_each(|(ray, pixel_color)| {
+            .for_each(|(ray, pixel_color, _)| {
                 pixel_color.0 += color(ray, &positions, &hitables, &materials, 0);
             });
 

@@ -1,4 +1,5 @@
 extern crate cgmath;
+extern crate hibitset;
 extern crate image;
 extern crate rand;
 extern crate rayon;
