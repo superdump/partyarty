@@ -168,6 +168,7 @@ fn main() -> Result<(), Error> {
     canvas.present();
     let mut event_pump = sdl_context.event_pump().unwrap();
 
+    let mut samples_per_sec = SlidingAverage::default();
     let timers = Timers::default();
     world.add_resource(PerfTimers(timers));
 
@@ -208,6 +209,23 @@ fn main() -> Result<(), Error> {
 
         timer_exit(&world, "frame");
         timer_print(&world);
+        let samples_per_sec_for_frame;
+        {
+            let timers = &world.read_resource::<PerfTimers>().0;
+            let samples_to_process = world.read_resource::<SamplesToProcessPerFrame>().0;
+            samples_per_sec_for_frame = samples_to_process as f64 * 1000.0 / *timers.frames_mean.q.back().unwrap();
+        }
+        let mean = samples_per_sec.append(samples_per_sec_for_frame);
+        {
+            let frame_count = world.read_resource::<FrameCount>().0;
+            if frame_count % 10 == 0 {
+                println!(
+                    "\tmean: {:.3} Msamples/s, frame: {:.3} Msamples/s",
+                    mean / 1_000_000f64,
+                    samples_per_sec_for_frame / 1_000_000f64,
+                );
+            }
+        }
     }
 
     Ok(())
