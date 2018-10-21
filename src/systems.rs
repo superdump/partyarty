@@ -1,6 +1,6 @@
 use cgmath::prelude::*;
 use cgmath::vec3;
-use image::{RGB, save_buffer};
+use image::{RGBA, save_buffer};
 use specs::prelude::*;
 
 use camera::Camera;
@@ -194,10 +194,10 @@ impl<'a> System<'a> for FrameAverage {
             let y = pixel_position.0.y;
             let i = y * width + x;
             let (a, r, g, b) = (one_over_frame_count * pixel_color.0).as_argb8888();
-            buffer[i * 4 + 0] = a;
-            buffer[i * 4 + 1] = r;
-            buffer[i * 4 + 2] = g;
-            buffer[i * 4 + 3] = b;
+            buffer[i * 4 + 0] = r;
+            buffer[i * 4 + 1] = g;
+            buffer[i * 4 + 2] = b;
+            buffer[i * 4 + 3] = a;
         }
         timers.exit("SYSTEM : FrameAverage");
     }
@@ -242,7 +242,7 @@ impl<'a> System<'a> for SaveImage {
         let height = height.0;
         let buffer = &buffer_output.0;
         let filename = format!("{}{:05}.png", prefix, frame_count);
-        save_buffer(filename, buffer, width as u32, height as u32, RGB(8)).unwrap();
+        save_buffer(filename, buffer, width as u32, height as u32, RGBA(8)).unwrap();
         timers.exit("SYSTEM : SaveImage");
     }
 }

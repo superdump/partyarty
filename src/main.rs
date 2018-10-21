@@ -137,7 +137,7 @@ fn main() -> Result<(), Error> {
 
     let texture_creator = canvas.texture_creator();
     let mut texture = texture_creator.create_texture_streaming(
-        Some(PixelFormatEnum::BGRA8888), width as u32, height as u32).unwrap();
+        Some(PixelFormatEnum::ABGR8888), width as u32, height as u32).unwrap();
     let rect = Some(Rect::new(0, 0, width as u32, height as u32));
 
     canvas.set_draw_color(Color::RGB(0, 0, 0));
