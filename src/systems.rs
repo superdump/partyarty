@@ -231,7 +231,7 @@ impl<'a> System<'a> for SaveImage {
         let samples = samples.0;
         frame_count.0 += 1;
         let frame_count = frame_count.0;
-        if samples > 0 && frame_count > samples as u32 && prefix.len() >= 1 {
+        if samples < 1 || frame_count > samples as u32 || prefix.len() < 1 {
             return;
         }
 
