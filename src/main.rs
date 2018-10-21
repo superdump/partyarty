@@ -60,7 +60,7 @@ fn main() -> Result<(), Error> {
 
     let width: usize = value_t!(matches.value_of("width"), usize).unwrap_or(640);
     let height: usize = value_t!(matches.value_of("height"), usize).unwrap_or(320);
-    let samples: usize = value_t!(matches.value_of("samples"), usize).unwrap_or(100);
+    let samples: usize = value_t!(matches.value_of("samples"), usize).unwrap_or(0);
     let prefix: String = value_t!(matches.value_of("output"), String).unwrap_or(String::from(""));
     let scene: String = value_t!(matches.value_of("scene"), String).unwrap_or(String::from("random"));
 
@@ -176,7 +176,7 @@ fn main() -> Result<(), Error> {
             }
         }
 
-        {
+        if samples > 0 {
             let frame_count = world.read_resource::<FrameCount>();
             if frame_count.0 > samples as u32 {
                 break;
