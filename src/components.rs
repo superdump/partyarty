@@ -27,6 +27,12 @@ impl Component for PixelColor {
     type Storage = VecStorage<Self>;
 }
 
+pub struct SampleCount(pub f32);
+
+impl Component for SampleCount {
+    type Storage = VecStorage<Self>;
+}
+
 impl Component for Ray {
     type Storage = VecStorage<Self>;
 }
@@ -52,6 +58,7 @@ impl Component for Material {
 pub fn register_components(world: &mut World) {
     world.register::<PixelPosition>();
     world.register::<PixelColor>();
+    world.register::<SampleCount>();
     world.register::<Ray>();
     world.register::<Position>();
     world.register::<Hitable>();

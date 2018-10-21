@@ -118,6 +118,7 @@ fn main() -> Result<(), Error> {
                 .with(pixel_position(x, y))
                 .with(pixel_color(0.0, 0.0, 0.0, 0.0))
                 .with(Ray::default())
+                .with(SampleCount(0.0f32))
                 .build()
         );
     }
@@ -135,8 +136,8 @@ fn main() -> Result<(), Error> {
     let mut dispatcher = DispatcherBuilder::new()
         .with(RayCast, "ray_cast", &[])
         .with(PathTrace, "path_trace", &["ray_cast"])
-        .with(FrameAverage, "frame_average", &["path_trace"])
-        .with(SaveImage, "save_image", &["frame_average"])
+        .with(SampleAverage, "sample_average", &["path_trace"])
+        .with(SaveImage, "save_image", &["sample_average"])
         .build();
 
     let sdl_context = sdl2::init().unwrap();

@@ -108,8 +108,8 @@ impl<'a> System<'a> for PathTrace {
         ReadStorage<'a, Hitable>,
         ReadStorage<'a, Material>,
         WriteStorage<'a, PixelColor>,
+        WriteStorage<'a, SampleCount>,
         Write<'a, PixelsToProcess>,
-        Write<'a, FrameCount>,
         Write<'a, PerfTimers>,
     );
 
@@ -121,8 +121,8 @@ impl<'a> System<'a> for PathTrace {
             hitables,
             materials,
             mut pixel_colors,
+            mut sample_counts,
             mut pixels_to_process,
-            mut frame_count,
             mut timers,
         ): Self::SystemData
     ) {
@@ -135,7 +135,7 @@ impl<'a> System<'a> for PathTrace {
         let pixels_to_process = &mut pixels_to_process.0;
         let mut pixels_to_process_now = BitSet::new();
         let mut count = 0;
-        let limit = 1_000;
+        let limit = 10_000;
         let pixel_collection: BitSet = (&*pixels_to_process)
             .join()
             .take_while(|_| { count += 1; count < limit })
@@ -143,29 +143,29 @@ impl<'a> System<'a> for PathTrace {
         pixels_to_process_now |= &pixel_collection;
         *pixels_to_process &= &!pixels_to_process_now.clone();
         if count < limit {
-            frame_count.0 += 1;
             *pixels_to_process = rays.mask().clone();
             *pixels_to_process &= pixel_colors.mask();
         }
 
-        (&rays, &mut pixel_colors, pixels_to_process_now.clone())
+        (&rays, &mut pixel_colors, &mut sample_counts, pixels_to_process_now.clone())
             .par_join()
-            .for_each(|(ray, pixel_color, _)| {
+            .for_each(|(ray, pixel_color, sample_count, _)| {
                 pixel_color.0 += color(ray, &positions, &hitables, &materials, 0);
+                sample_count.0 += 1.0;
             });
 
         timers.exit("SYSTEM : PathTrace");
     }
 }
 
-pub struct FrameAverage;
+pub struct SampleAverage;
 
-impl<'a> System<'a> for FrameAverage {
+impl<'a> System<'a> for SampleAverage {
     type SystemData = (
         ReadStorage<'a, PixelPosition>,
         ReadStorage<'a, PixelColor>,
+        ReadStorage<'a, SampleCount>,
         Read<'a, Width>,
-        Read<'a, FrameCount>,
         Write<'a, BufferOutput>,
         Write<'a, PerfTimers>,
     );
@@ -175,8 +175,8 @@ impl<'a> System<'a> for FrameAverage {
         (
             pixel_positions,
             pixel_colors,
+            sample_counts,
             width,
-            frame_count,
             mut buffer_output,
             mut timers,
         ): Self::SystemData
@@ -184,22 +184,21 @@ impl<'a> System<'a> for FrameAverage {
         use specs::Join;
 
         let timers = &mut timers.0;
-        timers.enter("SYSTEM : FrameAverage");
+        timers.enter("SYSTEM : SampleAverage");
         let width = width.0;
-        let one_over_frame_count = 1.0 / frame_count.0 as f32;
         let buffer = &mut buffer_output.0;
 
-        for (pixel_position, pixel_color) in (&pixel_positions, &pixel_colors).join() {
+        for (pixel_position, pixel_color, sample_count) in (&pixel_positions, &pixel_colors, &sample_counts).join() {
             let x = pixel_position.0.x;
             let y = pixel_position.0.y;
             let i = y * width + x;
-            let (a, r, g, b) = (one_over_frame_count * pixel_color.0).as_argb8888();
+            let (a, r, g, b) = (pixel_color.0 / sample_count.0).as_argb8888();
             buffer[i * 4 + 0] = r;
             buffer[i * 4 + 1] = g;
             buffer[i * 4 + 2] = b;
             buffer[i * 4 + 3] = a;
         }
-        timers.exit("SYSTEM : FrameAverage");
+        timers.exit("SYSTEM : SampleAverage");
     }
 }
 
@@ -211,8 +210,8 @@ impl<'a> System<'a> for SaveImage {
         Read<'a, Width>,
         Read<'a, Height>,
         Read<'a, Samples>,
-        Read<'a, FrameCount>,
         Read<'a, BufferOutput>,
+        Write<'a, FrameCount>,
         Write<'a, PerfTimers>,
     );
 
@@ -223,13 +222,14 @@ impl<'a> System<'a> for SaveImage {
             width,
             height,
             samples,
-            frame_count,
             buffer_output,
+            mut frame_count,
             mut timers,
         ): Self::SystemData
     ) {
         let prefix = &prefix.0;
         let samples = samples.0;
+        frame_count.0 += 1;
         let frame_count = frame_count.0;
         if frame_count > samples as u32 || prefix.len() < 1 {
             return;
