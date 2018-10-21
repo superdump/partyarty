@@ -18,6 +18,12 @@ pub struct Height(pub usize);
 pub struct FrameCount(pub u32);
 
 #[derive(Debug, Default)]
+pub struct TargetFrameDuration(pub f64);
+
+#[derive(Debug, Default)]
+pub struct SamplesToProcessPerFrame(pub u64);
+
+#[derive(Debug, Default)]
 pub struct BufferOutput(pub Vec<u8>);
 
 #[derive(Debug, Default)]

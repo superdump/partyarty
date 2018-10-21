@@ -56,6 +56,12 @@ fn main() -> Result<(), Error> {
             .value_name("OUTPUT")
             .help("output image file name prefix")
             .takes_value(true))
+        .arg(Arg::with_name("framerate")
+            .short("f")
+            .long("framerate")
+            .value_name("FRAMERATE")
+            .help("framerate of the preview")
+            .takes_value(true))
         .get_matches();
 
     let width: usize = value_t!(matches.value_of("width"), usize).unwrap_or(640);
@@ -63,6 +69,7 @@ fn main() -> Result<(), Error> {
     let samples: usize = value_t!(matches.value_of("samples"), usize).unwrap_or(0);
     let prefix: String = value_t!(matches.value_of("output"), String).unwrap_or(String::from(""));
     let scene: String = value_t!(matches.value_of("scene"), String).unwrap_or(String::from("random"));
+    let framerate: f64 = value_t!(matches.value_of("framerate"), f64).unwrap_or(30.0f64);
 
     let buffer_output: Vec<u8> = vec![0; width * height * 4];
 
@@ -129,6 +136,8 @@ fn main() -> Result<(), Error> {
     world.add_resource(Height(height));
     world.add_resource(Samples(samples));
     world.add_resource(FrameCount(0));
+    world.add_resource(SamplesToProcessPerFrame(10000));
+    world.add_resource(TargetFrameDuration(1.0f64 / framerate));
     world.add_resource(BufferOutput(buffer_output));
     world.add_resource(PixelsToProcess(BitSet::new()));
 

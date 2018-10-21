@@ -107,8 +107,10 @@ impl<'a> System<'a> for PathTrace {
         ReadStorage<'a, Position>,
         ReadStorage<'a, Hitable>,
         ReadStorage<'a, Material>,
+        Read<'a, TargetFrameDuration>,
         WriteStorage<'a, PixelColor>,
         WriteStorage<'a, SampleCount>,
+        Write<'a, SamplesToProcessPerFrame>,
         Write<'a, PixelsToProcess>,
         Write<'a, PerfTimers>,
     );
@@ -120,8 +122,10 @@ impl<'a> System<'a> for PathTrace {
             positions,
             hitables,
             materials,
+            target_frame_duration,
             mut pixel_colors,
             mut sample_counts,
+            mut samples_to_process,
             mut pixels_to_process,
             mut timers,
         ): Self::SystemData
@@ -132,17 +136,30 @@ impl<'a> System<'a> for PathTrace {
         let timers = &mut timers.0;
         timers.enter("SYSTEM : PathTrace");
 
+        let target_frame_duration = target_frame_duration.0;
+        let actual_frame_duration;
+        if let Some(d) = timers.frames_mean.q.back() {
+            actual_frame_duration = *d / 1000.0;
+        } else {
+            actual_frame_duration = target_frame_duration;
+        }
+        let samples_to_process = &mut samples_to_process.0;
+        let new_samples_to_process =
+            (*samples_to_process *
+                ((1000.0 * (0.99 * target_frame_duration) / actual_frame_duration) as u64)
+            ) / 1000;
+        *samples_to_process = new_samples_to_process;
+
         let pixels_to_process = &mut pixels_to_process.0;
         let mut pixels_to_process_now = BitSet::new();
         let mut count = 0;
-        let limit = 10_000;
-        let pixel_collection: BitSet = (&*pixels_to_process)
+        let mut pixel_collection: BitSet = (&*pixels_to_process)
             .join()
-            .take_while(|_| { count += 1; count < limit })
+            .take_while(|_| { count += 1; count < new_samples_to_process })
             .collect();
         pixels_to_process_now |= &pixel_collection;
         *pixels_to_process &= &!pixels_to_process_now.clone();
-        if count < limit {
+        if count < new_samples_to_process {
             *pixels_to_process = rays.mask().clone();
             *pixels_to_process &= pixel_colors.mask();
         }
