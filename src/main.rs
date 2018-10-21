@@ -8,12 +8,11 @@ extern crate sdl2;
 use clap::{App, Arg};
 use failure::Error;
 use partyarty::*;
+use rand::{thread_rng, distributions::{Distribution, Uniform}};
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
-
-use rand::{thread_rng, distributions::{Distribution, Uniform}};
 
 
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
