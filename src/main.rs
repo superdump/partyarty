@@ -113,13 +113,14 @@ fn main() -> Result<(), Error> {
             }
         }
         thread_rng().shuffle(&mut coords);
+        let color = pixel_color(0.0, 0.0, 0.0, 0.0);
+        let sample_count = SampleCount(0.0f32);
         for (x, y) in coords {
             entities.push(
                 world.create_entity()
                     .with(pixel_position(x, y))
-                    .with(pixel_color(0.0, 0.0, 0.0, 0.0))
-                    .with(Ray::default())
-                    .with(SampleCount(0.0f32))
+                    .with(color)
+                    .with(sample_count)
                     .build()
             );
         }
@@ -138,8 +139,7 @@ fn main() -> Result<(), Error> {
 
 
     let mut dispatcher = DispatcherBuilder::new()
-        .with(RayCast, "ray_cast", &[])
-        .with(PathTrace, "path_trace", &["ray_cast"])
+        .with(PathTrace, "path_trace", &[])
         .with(SampleAverage, "sample_average", &["path_trace"])
         .with(SaveImage, "save_image", &["sample_average"])
         .build();

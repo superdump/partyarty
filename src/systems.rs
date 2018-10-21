@@ -54,56 +54,14 @@ fn color<'a>(
     }
 }
 
-pub struct RayCast;
+pub struct PathTrace;
 
-impl<'a> System<'a> for RayCast {
+impl<'a> System<'a> for PathTrace {
     type SystemData = (
         ReadStorage<'a, PixelPosition>,
         Read<'a, Camera>,
         Read<'a, Width>,
         Read<'a, Height>,
-        WriteStorage<'a, Ray>,
-        Write<'a, PerfTimers>,
-    );
-
-    fn run(
-        &mut self,
-        (
-            pixel_positions,
-            camera,
-            width,
-            height,
-            mut rays,
-            mut timers,
-        ): Self::SystemData,
-    ) {
-        use rayon::prelude::*;
-        use specs::ParJoin;
-
-        let timers = &mut timers.0;
-        timers.enter("SYSTEM : RayCast");
-        let width_f32 = width.0 as f32;
-        let height_f32 = height.0 as f32;
-        let height_minus_one = height.0 - 1;
-
-        (&pixel_positions, &mut rays)
-            .par_join()
-            .for_each(|(pixel_position, ray)| {
-                let x = pixel_position.0.x;
-                let y = height_minus_one - pixel_position.0.y;
-                let u = (x as f32 + random_float_01()) / width_f32;
-                let v = (y as f32 + random_float_01()) / height_f32;
-                *ray = camera.get_ray(u, v);
-            });
-        timers.exit("SYSTEM : RayCast");
-    }
-}
-
-pub struct PathTrace;
-
-impl<'a> System<'a> for PathTrace {
-    type SystemData = (
-        ReadStorage<'a, Ray>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, Hitable>,
         ReadStorage<'a, Material>,
@@ -118,7 +76,10 @@ impl<'a> System<'a> for PathTrace {
     fn run(
         &mut self,
         (
-            rays,
+            pixel_positions,
+            camera,
+            width,
+            height,
             positions,
             hitables,
             materials,
@@ -150,31 +111,39 @@ impl<'a> System<'a> for PathTrace {
             ) / 1000;
         *samples_to_process = new_samples_to_process;
 
+        let width_f32 = width.0 as f32;
+        let height_f32 = height.0 as f32;
+        let height_minus_one = height.0 - 1;
+
         let pixels_to_process = &mut pixels_to_process.0;
         let mut pixels_to_process_now = BitSet::new();
         let mut count = 0;
-        let mut pixel_collection: BitSet = (&*pixels_to_process)
-            .join()
-            .take_while(|_| { count += 1; count < new_samples_to_process })
-            .collect();
-        pixels_to_process_now |= &pixel_collection;
-        *pixels_to_process &= &!pixels_to_process_now.clone();
-        if count < new_samples_to_process {
-            *pixels_to_process = rays.mask().clone();
-            *pixels_to_process &= pixel_colors.mask();
+        let mut pixel_collection: BitSet;
+        loop {
             pixel_collection = (&*pixels_to_process)
                 .join()
                 .take_while(|_| { count += 1; count < new_samples_to_process })
                 .collect();
             pixels_to_process_now |= &pixel_collection;
+            (&pixel_positions, &mut pixel_colors, &mut sample_counts, pixels_to_process_now.clone())
+                .par_join()
+                .for_each(|(pixel_position, pixel_color, sample_count, _)| {
+                    let x = pixel_position.0.x;
+                    let y = height_minus_one - pixel_position.0.y;
+                    let u = (x as f32 + random_float_01()) / width_f32;
+                    let v = (y as f32 + random_float_01()) / height_f32;
+                    let ray = camera.get_ray(u, v);
+                    pixel_color.0 += color(&ray, &positions, &hitables, &materials, 0);
+                    sample_count.0 += 1.0;
+                });
+            if count >= new_samples_to_process {
+                break;
+            }
+            *pixels_to_process = pixel_positions.mask().clone();
+            *pixels_to_process &= pixel_colors.mask();
+            pixels_to_process_now.clear();
         }
-
-        (&rays, &mut pixel_colors, &mut sample_counts, pixels_to_process_now.clone())
-            .par_join()
-            .for_each(|(ray, pixel_color, sample_count, _)| {
-                pixel_color.0 += color(ray, &positions, &hitables, &materials, 0);
-                sample_count.0 += 1.0;
-            });
+        *pixels_to_process &= &!pixels_to_process_now.clone();
 
         timers.exit("SYSTEM : PathTrace");
     }

@@ -4,7 +4,6 @@ use specs::prelude::*;
 use color::Colorf32;
 use hitable::Hitable;
 use material::Material;
-use ray::Ray;
 use utils::point3;
 
 pub struct PixelPosition(pub Point2<usize>);
@@ -17,6 +16,7 @@ impl Component for PixelPosition {
     type Storage = VecStorage<Self>;
 }
 
+#[derive(Clone, Copy)]
 pub struct PixelColor(pub Colorf32);
 
 pub fn pixel_color(r: f32, g: f32, b: f32, a: f32) -> PixelColor {
@@ -27,13 +27,10 @@ impl Component for PixelColor {
     type Storage = VecStorage<Self>;
 }
 
+#[derive(Clone, Copy)]
 pub struct SampleCount(pub f32);
 
 impl Component for SampleCount {
-    type Storage = VecStorage<Self>;
-}
-
-impl Component for Ray {
     type Storage = VecStorage<Self>;
 }
 
@@ -59,7 +56,6 @@ pub fn register_components(world: &mut World) {
     world.register::<PixelPosition>();
     world.register::<PixelColor>();
     world.register::<SampleCount>();
-    world.register::<Ray>();
     world.register::<Position>();
     world.register::<Hitable>();
     world.register::<Material>();
