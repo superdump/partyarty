@@ -2,6 +2,7 @@
 extern crate clap;
 extern crate failure;
 extern crate partyarty;
+extern crate rand;
 extern crate sdl2;
 
 use clap::{App, Arg};
@@ -11,6 +12,8 @@ use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
+
+use rand::{thread_rng, distributions::{Distribution, Uniform}};
 
 
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
@@ -96,16 +99,27 @@ fn main() -> Result<(), Error> {
         },
     };
 
-    for y in 0..height {
-        for x in 0..width {
-            entities.push(
-                world.create_entity()
-                    .with(pixel_position(x, y))
-                    .with(pixel_color(0.0, 0.0, 0.0, 0.0))
-                    .with(Ray::default())
-                    .build()
-            );
-        }
+    let n_pixels = (width * height) as u32;
+    let mut set = BitSet::new();
+    let range = Uniform::from(0..n_pixels);
+    let mut rng = thread_rng();
+    for _ in 0..n_pixels {
+        let mut i;
+        while {
+            i = range.sample(&mut rng);
+            set.contains(i)
+        } {}
+        set.add(i);
+        let i = i as usize;
+        let x = i % width;
+        let y = i / width;
+        entities.push(
+            world.create_entity()
+                .with(pixel_position(x, y))
+                .with(pixel_color(0.0, 0.0, 0.0, 0.0))
+                .with(Ray::default())
+                .build()
+        );
     }
 
     world.add_resource(camera);
@@ -175,8 +189,8 @@ fn main() -> Result<(), Error> {
         timer_transition(&world, "LOOP : dispatch", "LOOP : update_frame");
 
         {
-        let buffer = &world.read_resource::<BufferOutput>().0;
-        texture.update(rect, buffer, width * 4)?;
+            let buffer = &world.read_resource::<BufferOutput>().0;
+            texture.update(rect, buffer, width * 4)?;
         }
         canvas.copy(&texture, rect, rect).unwrap();
         timer_exit(&world, "LOOP : update_frame");
