@@ -140,8 +140,7 @@ fn main() -> Result<(), Error> {
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(PathTrace, "path_trace", &[])
-        .with(SampleAverage, "sample_average", &["path_trace"])
-        .with(SaveImage, "save_image", &["sample_average"])
+        .with(SaveImage, "save_image", &["path_trace"])
         .build();
 
     let sdl_context = sdl2::init().unwrap();

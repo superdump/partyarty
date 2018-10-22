@@ -70,6 +70,7 @@ impl<'a> System<'a> for PathTrace {
         WriteStorage<'a, SampleCount>,
         Write<'a, SamplesToProcessPerFrame>,
         Write<'a, PixelsToProcess>,
+        Write<'a, BufferOutput>,
         Write<'a, PerfTimers>,
     );
 
@@ -88,6 +89,7 @@ impl<'a> System<'a> for PathTrace {
             mut sample_counts,
             mut samples_to_process,
             mut pixels_to_process,
+            mut buffer_output,
             mut timers,
         ): Self::SystemData
     ) {
@@ -111,7 +113,9 @@ impl<'a> System<'a> for PathTrace {
             ) / 1000;
         *samples_to_process = new_samples_to_process;
 
-        let width_f32 = width.0 as f32;
+        let width = width.0;
+        let buffer = &mut buffer_output.0;
+        let width_f32 = width as f32;
         let height_f32 = height.0 as f32;
         let height_minus_one = height.0 - 1;
 
@@ -136,6 +140,26 @@ impl<'a> System<'a> for PathTrace {
                     pixel_color.0 += color(&ray, &positions, &hitables, &materials, 0);
                     sample_count.0 += 1.0;
                 });
+            for (
+                pixel_position,
+                pixel_color,
+                sample_count,
+                _,
+            ) in (
+                &pixel_positions,
+                &pixel_colors,
+                &sample_counts,
+                &pixels_to_process_now,
+            ).join() {
+                let x = pixel_position.0.x;
+                let y = pixel_position.0.y;
+                let i = y * width + x;
+                let (a, r, g, b) = (pixel_color.0 / sample_count.0).as_argb8888();
+                buffer[i * 4 + 0] = r;
+                buffer[i * 4 + 1] = g;
+                buffer[i * 4 + 2] = b;
+                buffer[i * 4 + 3] = a;
+            }
             if count >= new_samples_to_process {
                 break;
             }
@@ -146,50 +170,6 @@ impl<'a> System<'a> for PathTrace {
         *pixels_to_process &= &!pixels_to_process_now.clone();
 
         timers.exit("SYSTEM : PathTrace");
-    }
-}
-
-pub struct SampleAverage;
-
-impl<'a> System<'a> for SampleAverage {
-    type SystemData = (
-        ReadStorage<'a, PixelPosition>,
-        ReadStorage<'a, PixelColor>,
-        ReadStorage<'a, SampleCount>,
-        Read<'a, Width>,
-        Write<'a, BufferOutput>,
-        Write<'a, PerfTimers>,
-    );
-
-    fn run(
-        &mut self,
-        (
-            pixel_positions,
-            pixel_colors,
-            sample_counts,
-            width,
-            mut buffer_output,
-            mut timers,
-        ): Self::SystemData
-    ) {
-        use specs::Join;
-
-        let timers = &mut timers.0;
-        timers.enter("SYSTEM : SampleAverage");
-        let width = width.0;
-        let buffer = &mut buffer_output.0;
-
-        for (pixel_position, pixel_color, sample_count) in (&pixel_positions, &pixel_colors, &sample_counts).join() {
-            let x = pixel_position.0.x;
-            let y = pixel_position.0.y;
-            let i = y * width + x;
-            let (a, r, g, b) = (pixel_color.0 / sample_count.0).as_argb8888();
-            buffer[i * 4 + 0] = r;
-            buffer[i * 4 + 1] = g;
-            buffer[i * 4 + 2] = b;
-            buffer[i * 4 + 3] = a;
-        }
-        timers.exit("SYSTEM : SampleAverage");
     }
 }
 
