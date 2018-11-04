@@ -6,7 +6,8 @@ use specs::prelude::*;
 use camera::Camera;
 use color::Colorf32;
 use components::*;
-use hitable::{hit, Hitable, HitRecord};
+use bvh::*;
+use hitable::{bounding_box, hit, Hitable, HitRecord};
 use material::{Material, scatter};
 use ray::Ray;
 use resources::*;
@@ -15,34 +16,28 @@ use utils::{lerp_vec3, random_float_01};
 use std;
 
 fn color<'a>(
+    tree: &BVHTree,
     r: &Ray,
-    position: &ReadStorage<'a, Position>,
-    hitable: &ReadStorage<'a, Hitable>,
-    material: &ReadStorage<'a, Material>,
+    entities: &Entities,
+    positions: &ReadStorage<'a, Position>,
+    hitables: &ReadStorage<'a, Hitable>,
+    materials: &ReadStorage<'a, Material>,
     depth: u32,
 ) -> Colorf32 {
-    use specs::Join;
-
-    let mut closest_hit: Option<HitRecord> = None;
-    let mut t_max = std::f32::MAX;
-    for (position, hitable, material) in (position, hitable, material).join() {
-        if let Some(mut rec) = hit(position, hitable, r, 0.001, t_max) {
-            rec.material = Some(material.clone());
-            if let Some(closest) = closest_hit {
-                if rec.t < closest.t {
-                    t_max = rec.t;
-                    closest_hit = Some(rec);
-                }
-            } else {
-                closest_hit = Some(rec);
-            }
-        }
-    }
-    if let Some(rec) = closest_hit {
+    if let Some(mut rec) = hit_bvh_node(
+        tree,
+        positions,
+        hitables,
+        &tree.nodes[tree.nodes.len() - 1],
+        r,
+        0.001,
+        std::f32::MAX,
+    ) {
+        rec.material = Some(materials.get(rec.entity.unwrap()).unwrap().clone());
         let scatter_option = scatter(r, &rec);
         if depth < 50 && scatter_option.is_some() {
             let (attenuation, scattered) = scatter_option.unwrap();
-            return (attenuation * color(&scattered, position, hitable, material, depth + 1)).into();
+            return (attenuation * color(tree, &scattered, entities, positions, hitables, materials, depth + 1)).into();
         } else {
             return Colorf32::new(0.0, 0.0, 0.0, 1.0);
         }
@@ -54,6 +49,39 @@ fn color<'a>(
     }
 }
 
+pub struct BVHTreeBuild;
+
+impl<'a> System<'a> for BVHTreeBuild {
+    type SystemData = (
+        Entities<'a>,
+        ReadStorage<'a, Position>,
+        ReadStorage<'a, Hitable>,
+        Write<'a, BVHTree>,
+    );
+
+    fn run(
+        &mut self,
+        (
+            entities,
+            positions,
+            hitables,
+            mut bvh_tree,
+        ): Self::SystemData,
+    ) {
+        use specs::Join;
+
+        for (entity, position, hitable) in (&entities, &positions, &hitables).join() {
+            bvh_tree.nodes.push(bvh_node(
+                bounding_box(&position, &hitable, 0.0, 1.0).unwrap(),
+                Some(entity),
+            ));
+        }
+
+        let n = bvh_tree.nodes.len();
+        build_bvh(&mut bvh_tree, 0, n, 0.0, 1.0);
+    }
+}
+
 pub struct PathTrace;
 
 impl<'a> System<'a> for PathTrace {
@@ -62,9 +90,11 @@ impl<'a> System<'a> for PathTrace {
         Read<'a, Camera>,
         Read<'a, Width>,
         Read<'a, Height>,
+        Entities<'a>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, Hitable>,
         ReadStorage<'a, Material>,
+        Read<'a, BVHTree>,
         Read<'a, TargetFrameDuration>,
         WriteStorage<'a, PixelColor>,
         WriteStorage<'a, SampleCount>,
@@ -81,9 +111,11 @@ impl<'a> System<'a> for PathTrace {
             camera,
             width,
             height,
+            entities,
             positions,
             hitables,
             materials,
+            bvh_tree,
             target_frame_duration,
             mut pixel_colors,
             mut sample_counts,
@@ -137,7 +169,7 @@ impl<'a> System<'a> for PathTrace {
                     let u = (x as f32 + random_float_01()) / width_f32;
                     let v = (y as f32 + random_float_01()) / height_f32;
                     let ray = camera.get_ray(u, v);
-                    pixel_color.0 += color(&ray, &positions, &hitables, &materials, 0);
+                    pixel_color.0 += color(&bvh_tree, &ray, &entities, &positions, &hitables, &materials, 0);
                     sample_count.0 += 1.0;
                 });
             for (

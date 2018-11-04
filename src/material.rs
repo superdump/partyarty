@@ -25,7 +25,7 @@ fn schlick(cosine: f32, ref_idx: f32) -> f32 {
     r1 + (1.0 - r1) * (1.0 - cosine).powf(5.0)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Lambertian {
     pub albedo: Vector3<f32>,
 }
@@ -34,7 +34,7 @@ pub fn lambertian(albedo: Vector3<f32>) -> Material {
     Material::Lambertian(Lambertian { albedo })
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Metal{
     pub albedo: Vector3<f32>,
     pub fuzz: f32,
@@ -44,7 +44,7 @@ pub fn metal(albedo: Vector3<f32>, fuzz: f32) -> Material {
     Material::Metal(Metal { albedo, fuzz })
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Dielectric{
     pub ref_idx: f32,
 }
@@ -53,7 +53,7 @@ pub fn dielectric(ref_idx: f32) -> Material {
     Material::Dielectric(Dielectric { ref_idx })
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Material {
     Dielectric(Dielectric),
     Lambertian(Lambertian),

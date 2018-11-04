@@ -136,7 +136,11 @@ fn main() -> Result<(), Error> {
     world.add_resource(TargetFrameDuration(1.0f64 / framerate));
     world.add_resource(BufferOutput(buffer_output));
     world.add_resource(PixelsToProcess(BitSet::new()));
+    world.add_resource(BVHTree::default());
 
+    let mut bvh_tree_build = BVHTreeBuild;
+    bvh_tree_build.run_now(&world.res);
+    world.maintain();
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(PathTrace, "path_trace", &[])

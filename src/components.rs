@@ -1,10 +1,15 @@
 use cgmath::{Point2, Point3};
 use specs::prelude::*;
 
+use aabb::AABB;
 use color::Colorf32;
 use hitable::Hitable;
 use material::Material;
 use utils::point3;
+
+impl Component for AABB {
+    type Storage = VecStorage<Self>;
+}
 
 pub struct PixelPosition(pub Point2<usize>);
 
@@ -53,10 +58,11 @@ impl Component for Material {
 }
 
 pub fn register_components(world: &mut World) {
-    world.register::<PixelPosition>();
-    world.register::<PixelColor>();
-    world.register::<SampleCount>();
-    world.register::<Position>();
+    world.register::<AABB>();
     world.register::<Hitable>();
     world.register::<Material>();
+    world.register::<PixelColor>();
+    world.register::<PixelPosition>();
+    world.register::<Position>();
+    world.register::<SampleCount>();
 }
