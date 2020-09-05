@@ -1,6 +1,7 @@
-use specs::World;
+use crate::PerfTimers;
 
-use resources::PerfTimers;
+use specs::World;
+use specs::prelude::*;
 
 use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, Instant};
@@ -135,25 +136,29 @@ impl Default for Timers {
     }
 }
 
-pub fn timer_enter(world: &World, a: &'static str) {
-    let timers = &mut world.write_resource::<PerfTimers>().0;
-    timers.enter(a);
+pub fn timer_enter(world: &mut World, a: &'static str) {
+    world.exec(|(mut timers, ): (Write<PerfTimers>, )| {
+        timers.0.enter(a);
+    });
 }
 
-pub fn timer_transition(world: &World, a: &'static str, b: &'static str) {
-    let timers = &mut world.write_resource::<PerfTimers>().0;
-    timers.exit(a);
-    timers.enter(b);
+pub fn timer_transition(world: &mut World, a: &'static str, b: &'static str) {
+    world.exec(|(mut timers, ): (Write<PerfTimers>, )| {
+        timers.0.exit(a);
+        timers.0.enter(b);
+    });
 }
 
-pub fn timer_exit(world: &World, a: &'static str) {
-    let timers = &mut world.write_resource::<PerfTimers>().0;
-    timers.exit(a);
+pub fn timer_exit(world: &mut World, a: &'static str) {
+    world.exec(|(mut timers, ): (Write<PerfTimers>, )| {
+        timers.0.exit(a);
+    });
 }
 
-pub fn timer_print(world: &World) {
-    let timers = &mut world.write_resource::<PerfTimers>().0;
-    if timers.frames.calls as u32 % 10 == 0 {
-        timers.print();
-    }
+pub fn timer_print(world: &mut World) {
+    world.exec(|(timers, ): (Read<PerfTimers>, )| {
+        if timers.0.frames.calls as u32 % 10 == 0 {
+            timers.0.print();
+        }
+    });
 }

@@ -1,6 +1,6 @@
 use cgmath::{Point3, vec3, Vector3};
 use cgmath::prelude::*;
-use rand::{FromEntropy, Rng, RngCore, CryptoRng, Error};
+use rand::{Rng, RngCore, SeedableRng, CryptoRng, Error};
 use rand::rngs::SmallRng;
 
 use std::cell::UnsafeCell;

@@ -1,6 +1,6 @@
 use cgmath::prelude::*;
 use cgmath::vec3;
-use image::{RGBA, save_buffer};
+use image::{ColorType::Rgba8, save_buffer};
 use specs::prelude::*;
 
 use camera::Camera;
@@ -21,7 +21,6 @@ fn color<'a>(
     material: &ReadStorage<'a, Material>,
     depth: u32,
 ) -> Colorf32 {
-    use specs::Join;
 
     let mut closest_hit: Option<HitRecord> = None;
     let mut t_max = std::f32::MAX;
@@ -94,7 +93,6 @@ impl<'a> System<'a> for PathTrace {
         ): Self::SystemData
     ) {
         use rayon::prelude::*;
-        use specs::{Join, ParJoin};
 
         let timers = &mut timers.0;
         timers.enter("SYSTEM : PathTrace");
@@ -213,7 +211,7 @@ impl<'a> System<'a> for SaveImage {
         let height = height.0;
         let buffer = &buffer_output.0;
         let filename = format!("{}{:05}.png", prefix, frame_count);
-        save_buffer(filename, buffer, width as u32, height as u32, RGBA(8)).unwrap();
+        save_buffer(filename, buffer, width as u32, height as u32, Rgba8).unwrap();
         timers.exit("SYSTEM : SaveImage");
     }
 }

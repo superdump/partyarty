@@ -8,7 +8,8 @@ extern crate sdl2;
 use clap::{App, Arg};
 use failure::Error;
 use partyarty::*;
-use rand::{thread_rng, Rng};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -112,7 +113,7 @@ fn main() -> Result<(), Error> {
                 coords.push((x, y));
             }
         }
-        thread_rng().shuffle(&mut coords);
+        coords.shuffle(&mut thread_rng());
         let color = pixel_color(0.0, 0.0, 0.0, 0.0);
         let sample_count = SampleCount(0.0f32);
         for (x, y) in coords {
@@ -126,16 +127,16 @@ fn main() -> Result<(), Error> {
         }
     }
 
-    world.add_resource(camera);
-    world.add_resource(ImageFilePrefix(prefix));
-    world.add_resource(Width(width));
-    world.add_resource(Height(height));
-    world.add_resource(Samples(samples));
-    world.add_resource(FrameCount(0));
-    world.add_resource(SamplesToProcessPerFrame(10000));
-    world.add_resource(TargetFrameDuration(1.0f64 / framerate));
-    world.add_resource(BufferOutput(buffer_output));
-    world.add_resource(PixelsToProcess(BitSet::new()));
+    world.insert(camera);
+    world.insert(ImageFilePrefix(prefix));
+    world.insert(Width(width));
+    world.insert(Height(height));
+    world.insert(Samples(samples));
+    world.insert(FrameCount(0));
+    world.insert(SamplesToProcessPerFrame(10000));
+    world.insert(TargetFrameDuration(1.0f64 / framerate));
+    world.insert(BufferOutput(buffer_output));
+    world.insert(PixelsToProcess(BitSet::new()));
 
 
     let mut dispatcher = DispatcherBuilder::new()
@@ -165,11 +166,11 @@ fn main() -> Result<(), Error> {
 
     let mut samples_per_sec = SlidingAverage::default();
     let timers = Timers::default();
-    world.add_resource(PerfTimers(timers));
+    world.insert(PerfTimers(timers));
 
     'mainloop: loop {
-        timer_enter(&world, "frame");
-        timer_enter(&world, "LOOP : events");
+        timer_enter(&mut world, "frame");
+        timer_enter(&mut world, "LOOP : events");
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit {..} |
@@ -187,28 +188,29 @@ fn main() -> Result<(), Error> {
             }
         }
 
-        timer_transition(&world, "LOOP : events", "LOOP : dispatch");
-        dispatcher.dispatch(&mut world.res);
+        timer_transition(&mut world, "LOOP : events", "LOOP : dispatch");
+        dispatcher.dispatch(&mut world);
         world.maintain();
 
-        timer_transition(&world, "LOOP : dispatch", "LOOP : update_frame");
+        timer_transition(&mut world, "LOOP : dispatch", "LOOP : update_frame");
 
         {
-            let buffer = &world.read_resource::<BufferOutput>().0;
-            texture.update(rect, buffer, width * 4)?;
+            world.exec(|(buffer, ): (Read<BufferOutput>, )| {
+                texture.update(rect, &buffer.0, width * 4).unwrap();
+            });
         }
         canvas.copy(&texture, rect, rect).unwrap();
-        timer_exit(&world, "LOOP : update_frame");
+        timer_exit(&mut world, "LOOP : update_frame");
 
         canvas.present();
 
-        timer_exit(&world, "frame");
-        timer_print(&world);
-        let samples_per_sec_for_frame;
+        timer_exit(&mut world, "frame");
+        timer_print(&mut world);
+        let mut samples_per_sec_for_frame = 0.0;
         {
-            let timers = &world.read_resource::<PerfTimers>().0;
-            let samples_to_process = world.read_resource::<SamplesToProcessPerFrame>().0;
-            samples_per_sec_for_frame = samples_to_process as f64 * 1000.0 / *timers.frames_mean.q.back().unwrap();
+            world.exec(|(timers, samples_to_process,): (Read<PerfTimers>, Read<SamplesToProcessPerFrame>,)| {
+                samples_per_sec_for_frame = samples_to_process.0 as f64 * 1000.0 / timers.0.frames_mean.q.back().unwrap();
+            });            
         }
         let mean = samples_per_sec.append(samples_per_sec_for_frame);
         {
