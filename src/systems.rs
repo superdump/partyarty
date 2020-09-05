@@ -1,5 +1,4 @@
-use cgmath::prelude::*;
-use cgmath::vec3;
+use glam::Vec3A;
 use image::{ColorType::Rgba8, save_buffer};
 use specs::prelude::*;
 
@@ -47,9 +46,9 @@ fn color<'a>(
         }
     } else {
         let unit_direction = r.direction.normalize();
-        let t = 0.5 * (unit_direction.y + 1.0);
-        let c = lerp_vec3(vec3(1.0, 1.0, 1.0), t, vec3(0.5, 0.7, 1.0));
-        return Colorf32::new(c.x, c.y, c.z, 1.0);
+        let t = 0.5 * (unit_direction.y() + 1.0);
+        let c = lerp_vec3(Vec3A::one(), t, Vec3A::new(0.5, 0.7, 1.0));
+        return Colorf32::new(c.x(), c.y(), c.z(), 1.0);
     }
 }
 
@@ -131,7 +130,7 @@ impl<'a> System<'a> for PathTrace {
                 .par_join()
                 .for_each(|(pixel_position, pixel_color, sample_count, _)| {
                     let x = pixel_position.0.x;
-                    let y = height_minus_one - pixel_position.0.y;
+                    let y = height_minus_one - pixel_position.0.y as usize;
                     let u = (x as f32 + random_float_01()) / width_f32;
                     let v = (y as f32 + random_float_01()) / height_f32;
                     let ray = camera.get_ray(u, v);
@@ -149,8 +148,8 @@ impl<'a> System<'a> for PathTrace {
                 &sample_counts,
                 &pixels_to_process_now,
             ).join() {
-                let x = pixel_position.0.x;
-                let y = pixel_position.0.y;
+                let x = pixel_position.0.x as usize;
+                let y = pixel_position.0.y as usize;
                 let i = y * width + x;
                 let (a, r, g, b) = (pixel_color.0 / sample_count.0).as_argb8888();
                 buffer[i * 4 + 0] = r;

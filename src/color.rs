@@ -1,4 +1,4 @@
-use cgmath::{Point3, Vector3};
+use glam::Vec3A;
 use std::convert::From;
 use std::fmt;
 use std::ops::{AddAssign, Div, Mul, MulAssign};
@@ -72,14 +72,14 @@ impl Mul<Colorf32> for f32 {
     }
 }
 
-impl Mul<Colorf32> for Vector3<f32> {
+impl Mul<Colorf32> for Vec3A {
     type Output = Colorf32;
 
     fn mul(self, rhs: Colorf32) -> Colorf32 {
         Colorf32::new(
-            self.x * rhs.r,
-            self.y * rhs.g,
-            self.z * rhs.b,
+            self.x() * rhs.r,
+            self.y() * rhs.g,
+            self.z() * rhs.b,
             rhs.a,
         )
     }
@@ -129,14 +129,8 @@ impl From<Colorf32> for u32 {
     }
 }
 
-impl From<Point3<f32>> for Colorf32 {
-    fn from(color: Point3<f32>) -> Self {
-        Colorf32::new(color.x, color.y, color.z, 1.0)
-    }
-}
-
-impl From<Vector3<f32>> for Colorf32 {
-    fn from(color: Vector3<f32>) -> Self {
-        Colorf32::new(color.x, color.y, color.z, 1.0)
+impl From<Vec3A> for Colorf32 {
+    fn from(color: Vec3A) -> Self {
+        Colorf32::new(color.x(), color.y(), color.z(), 1.0)
     }
 }

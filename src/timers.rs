@@ -103,8 +103,8 @@ impl Timers {
         if name == "frame" {
             self.frames.enter();
         } else {
-            if !self.timers.contains_key(&name) {
-                self.timers.insert(name.clone(), Timer::default());
+            if !self.timers.contains_key(name) {
+                self.timers.insert(name, Timer::default());
             }
             self.timers.get_mut(&name).unwrap().enter();
         }
@@ -117,8 +117,8 @@ impl Timers {
             let after = self.frames.total;
             self.frames_mean.append(to_msecs(after - before));
         } else {
-            if !self.timers.contains_key(&name) {
-                self.timers.insert(name.clone(), Timer::default());
+            if !self.timers.contains_key(name) {
+                self.timers.insert(name, Timer::default());
             }
             self.timers.get_mut(&name).unwrap().exit();
         }

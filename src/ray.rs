@@ -1,21 +1,19 @@
-use cgmath::{Point3, vec3, Vector3};
-
-use utils::point3;
+use glam::Vec3A;
 
 pub struct Ray {
-    pub origin: Point3<f32>,
-    pub direction: Vector3<f32>,
+    pub origin: Vec3A,
+    pub direction: Vec3A,
 }
 
 impl Ray {
-    pub fn new(o: Point3<f32>, d: Vector3<f32>) -> Ray {
+    pub fn new(o: Vec3A, d: Vec3A) -> Ray {
         Ray {
             origin: o,
             direction: d,
         }
     }
 
-    pub fn at_t(&self, t: f32) -> Point3<f32> {
+    pub fn at_t(&self, t: f32) -> Vec3A {
         self.origin + self.direction * t
     }
 }
@@ -23,8 +21,8 @@ impl Ray {
 impl Default for Ray {
     fn default() -> Ray {
         Ray::new(
-            point3(0.0, 0.0, 0.0),
-            vec3(0.0, 0.0, 0.0),
+            Vec3A::zero(),
+            Vec3A::zero(),
         )
     }
 }

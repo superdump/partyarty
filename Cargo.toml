@@ -5,9 +5,9 @@ authors = ["Robert Swain <robert.swain@gmail.com>"]
 description = "PartyArty - A Pseudo-Real-Time Ray Tracer"
 
 [dependencies]
-cgmath = "0.17.0"
 clap = "2.33.3"
 failure = "0.1.8"
+glam = "0.9.4"
 hibitset = "0.6.3"
 image = "0.23.9"
 rayon = "1.4.0"

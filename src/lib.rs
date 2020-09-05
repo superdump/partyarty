@@ -1,4 +1,4 @@
-extern crate cgmath;
+extern crate glam;
 extern crate hibitset;
 extern crate image;
 extern crate rand;
@@ -6,9 +6,8 @@ extern crate rayon;
 extern crate specs;
 extern crate thread_local;
 
-pub use cgmath::prelude::*;
-pub use cgmath::*;
 pub use specs::prelude::*;
+pub use glam::*;
 
 mod camera;
 mod color;

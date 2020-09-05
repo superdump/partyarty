@@ -1,29 +1,28 @@
-use cgmath::{Point3, vec3, Vector3};
-use cgmath::prelude::*;
+use glam::Vec3A;
 use std::default::Default;
 use std::f32;
 
 use ray::Ray;
-use utils::{point3, random_in_unit_disk};
+use utils::random_in_unit_disk;
 
 #[derive(Debug)]
 pub struct Camera {
-    origin: Point3<f32>,
-    lower_left_corner: Point3<f32>,
-    horizontal: Vector3<f32>,
-    vertical: Vector3<f32>,
-    u: Vector3<f32>,
-    v: Vector3<f32>,
-    w: Vector3<f32>,
+    origin: Vec3A,
+    lower_left_corner: Vec3A,
+    horizontal: Vec3A,
+    vertical: Vec3A,
+    u: Vec3A,
+    v: Vec3A,
+    w: Vec3A,
     lens_radius: f32,
 }
 
 impl Default for Camera {
     fn default() -> Camera {
         Camera::new(
-            point3(-2.0, 2.0, 1.0),
-            point3(0.0, 0.0, -1.0),
-            vec3(0.0, 1.0, 0.0),
+            Vec3A::new(-2.0, 2.0, 1.0),
+            Vec3A::new(0.0, 0.0, -1.0),
+            Vec3A::unit_y(),
             90.0,
             2.0,
             0.1,
@@ -34,9 +33,9 @@ impl Default for Camera {
 
 impl Camera {
     pub fn new(
-        look_from: Point3<f32>,
-        look_at: Point3<f32>,
-        vup: Vector3<f32>,
+        look_from: Vec3A,
+        look_at: Vec3A,
+        vup: Vec3A,
         vfov: f32,
         aspect: f32,
         aperture: f32,
@@ -64,7 +63,7 @@ impl Camera {
 
     pub fn get_ray(&self, s: f32, t: f32) -> Ray {
         let rd = self.lens_radius * random_in_unit_disk();
-        let offset = rd.x * self.u + rd.y * self.v;
+        let offset = rd.x() * self.u + rd.y() * self.v;
         Ray::new(
             self.origin + offset,
             self.lower_left_corner

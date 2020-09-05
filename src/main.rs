@@ -79,24 +79,24 @@ fn main() -> Result<(), Error> {
     let camera;
     let mut entities = match scene.as_ref() {
         "balls" => {
-            let look_from = point3(3.0, 3.0, 2.0);
-            let look_at = point3(0.0, 0.0, -1.0);
+            let look_from = Vec3A::new(3.0, 3.0, 2.0);
+            let look_at = Vec3A::new(0.0, 0.0, -1.0);
             camera = Camera::new(
                 look_from,
                 look_at,
-                vec3(0.0, 1.0, 0.0),
+                Vec3A::new(0.0, 1.0, 0.0),
                 20.0,
                 width as f32 / height as f32,
                 2.0,
-                (look_from - look_at).magnitude(),
+                (look_from - look_at).length(),
             );
             balls(&mut world)
         },
         "random" | _ => {
             camera = Camera::new(
-                point3(13.0, 2.0, 3.0),
-                point3(0.0, 0.0, 0.0),
-                vec3(0.0, 1.0, 0.0),
+                Vec3A::new(13.0, 2.0, 3.0),
+                Vec3A::new(0.0, 0.0, 0.0),
+                Vec3A::new(0.0, 1.0, 0.0),
                 20.0,
                 width as f32 / height as f32,
                 0.1,
@@ -210,7 +210,7 @@ fn main() -> Result<(), Error> {
         {
             world.exec(|(timers, samples_to_process,): (Read<PerfTimers>, Read<SamplesToProcessPerFrame>,)| {
                 samples_per_sec_for_frame = samples_to_process.0 as f64 * 1000.0 / timers.0.frames_mean.q.back().unwrap();
-            });            
+            });
         }
         let mean = samples_per_sec.append(samples_per_sec_for_frame);
         {

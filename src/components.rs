@@ -1,15 +1,24 @@
-use cgmath::{Point2, Point3};
+use glam::Vec3A;
 use specs::prelude::*;
 
 use color::Colorf32;
 use hitable::Hitable;
 use material::Material;
-use utils::point3;
 
-pub struct PixelPosition(pub Point2<usize>);
+pub struct Vec2u {
+    pub x: usize,
+    pub y: usize,
+}
+
+impl Vec2u {
+    pub fn new(x: usize, y: usize) -> Self {
+        Vec2u{ x, y }
+    }
+}
+pub struct PixelPosition(pub Vec2u);
 
 pub fn pixel_position(x: usize, y: usize) -> PixelPosition {
-    PixelPosition(Point2::new(x, y))
+    PixelPosition(Vec2u::new(x, y))
 }
 
 impl Component for PixelPosition {
@@ -34,10 +43,10 @@ impl Component for SampleCount {
     type Storage = VecStorage<Self>;
 }
 
-pub struct Position(pub Point3<f32>);
+pub struct Position(pub Vec3A);
 
 pub fn position(x: f32, y: f32, z: f32) -> Position {
-    Position(point3(x, y, z))
+    Position(Vec3A::new(x, y, z))
 }
 
 impl Component for Position {

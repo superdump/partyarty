@@ -1,7 +1,6 @@
-use cgmath::{Point3, vec3, Vector3};
-use cgmath::prelude::*;
 use rand::{Rng, RngCore, SeedableRng, CryptoRng, Error};
 use rand::rngs::SmallRng;
+use glam::Vec3A;
 
 use std::cell::UnsafeCell;
 
@@ -43,32 +42,28 @@ pub fn random_float_01() -> f32 {
     thread_small_rng().gen()
 }
 
-pub fn lerp_vec3(a: Vector3<f32>, t: f32, b: Vector3<f32>) -> Vector3<f32> {
+pub fn lerp_vec3(a: Vec3A, t: f32, b: Vec3A) -> Vec3A {
     (1.0 - t) * a + t * b
 }
 
-pub fn point3(x: f32, y: f32, z: f32) -> Point3<f32> {
-    Point3::new(x, y, z)
-}
-
-pub fn random_in_unit_disk() -> Vector3<f32> {
+pub fn random_in_unit_disk() -> Vec3A {
     let mut p;
-    let one_one_zero = vec3(1.0f32, 1.0f32, 0.0f32);
+    let one_one_zero = Vec3A::new(1.0f32, 1.0f32, 0.0f32);
     // the below is a do {} while () loop
     while {
-        p = 2.0 * vec3(random_float_01(), random_float_01(), 0.0) - one_one_zero;
-        p.magnitude2() >= 1.0
+        p = 2.0 * Vec3A::new(random_float_01(), random_float_01(), 0.0) - one_one_zero;
+        p.length_squared() >= 1.0
     } {}
     p
 }
 
-pub fn random_in_unit_sphere() -> Vector3<f32> {
+pub fn random_in_unit_sphere() -> Vec3A {
     let mut p;
-    let ones = vec3(1.0f32, 1.0f32, 1.0f32);
+    let ones = Vec3A::new(1.0f32, 1.0f32, 1.0f32);
     // the below is a do {} while () loop
     while {
-        p = 2.0 * vec3(random_float_01(), random_float_01(), random_float_01()) - ones;
-        p.magnitude2() >= 1.0
+        p = 2.0 * Vec3A::new(random_float_01(), random_float_01(), random_float_01()) - ones;
+        p.length_squared() >= 1.0
     } {}
     p
 }
